@@ -1,0 +1,14 @@
+# LLM
+ollama
+
+# Speech
+openai-whisper
+pyaudio
+# pyttsx3
+TTS         # Pour le Text-to-Speech
+webrtcvad  
+
+# Utilitaires
+pyyaml
+colorama
+numpy

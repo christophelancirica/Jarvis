@@ -1,0 +1,5 @@
+{
+  "voice_id": "2",
+  "personality": "Samantha",
+  "model": "tts_models/multilingual/multi-dataset/xtts_v2"
+}

@@ -1,0 +1,49 @@
+{
+    "themes": {
+        "light": {
+            "id": "light",
+            "current_name": "Mode Clair",
+            "next_name": "Mode Sombre",
+            "next_icon": "🌙",
+            "next_theme": "dark",
+            "description": "Passer en mode sombre",
+            "css_class": "theme-light",
+            "primary_color": "#ffffff",
+            "text_color": "#212529",
+            "accent_color": "#0d6efd",
+            "compatible_backgrounds": ["default", "office"]
+        },
+        "dark": {
+            "id": "dark",
+            "current_name": "Mode Sombre",
+            "next_name": "Mode Jarvis",
+            "next_icon": "🤖",
+            "next_theme": "jarvis",
+            "description": "Passer en mode Jarvis",
+            "css_class": "theme-dark",
+            "primary_color": "#1a1a1a",
+            "text_color": "#ffffff",
+            "accent_color": "#4dabf7",
+            "compatible_backgrounds": ["default", "jarvis_lab", "space", "office"]
+        },
+        "jarvis": {
+            "id": "jarvis",
+            "current_name": "Mode Jarvis",
+            "next_name": "Mode Clair",
+            "next_icon": "☀️",
+            "next_theme": "light",
+            "description": "Passer en mode clair",
+            "css_class": "theme-jarvis",
+            "primary_color": "#0a0e1a",
+            "text_color": "#00d4ff",
+            "accent_color": "#00ff88",
+            "compatible_backgrounds": ["default", "jarvis_lab", "space", "matrix"]
+        }
+    },
+    "config": {
+        "default_theme": "light",
+        "cycle_order": ["light", "dark", "jarvis"],
+        "enable_transitions": true,
+        "transition_duration": "0.3s"
+    }
+}

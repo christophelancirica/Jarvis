@@ -1,0 +1,243 @@
+/* ✅ SOLUTION: Seulement les enfants directs de main-content */
+.main-content > .dialogue-section {
+    grid-row: 1;
+    grid-column: 1; 
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+/* Section dialogue interne (celle qui contient les messages) */
+.dialogue-section .dialogue-section {
+    flex: 1; /* Prend tout l'espace disponible */
+    display: flex;
+    flex-direction: column;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+/* 🚀 CORRIGÉ - Arrière-plan sur la zone de dialogue (avec custom property) */
+.dialogue-section.bg-image {
+    position: relative;
+    /* L'image sera affichée via le pseudo-élément ::before avec opacité contrôlée */
+}
+
+/* 🚀 CORRIGÉ - Pseudo-élément pour l'image avec opacité par défaut */
+.dialogue-section.bg-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: var(--bg-image-url);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 1; /* Opacité par défaut, modifiable par setBackgroundOpacity */
+    z-index: 1;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+/* 🚀 IMPORTANT - Assurer que le contenu reste au-dessus ET OPAQUE */
+.dialogue-section.bg-image .dialogue-header,
+.dialogue-section.bg-image .dialogue-container {
+    position: relative;
+    z-index: 2;
+    /* Pas d'opacité héritée - le contenu reste à 100% */
+}
+
+/* ✅ Messages utilisateur (bleu + texte blanc) */
+.dialogue-section.bg-image .message-bubble.user {
+    background-color: rgba(var(--text-accent-rgb, 13, 110, 253), 0.95);
+    color: white;
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(var(--text-accent-rgb, 13, 110, 253), 0.8);
+}
+
+/* ✅ Messages assistant (gris + texte noir/blanc selon thème) */
+.dialogue-section.bg-image .message-bubble.assistant {
+    background-color: rgba(var(--bg-accent-rgb, 233, 236, 239), 0.95);
+    color: var(--text-primary);
+    backdrop-filter: blur(2px);
+    border: 1px solid rgba(var(--border-rgb, 222, 226, 230), 0.5);
+}
+
+/* ✅ Messages système */
+.dialogue-section.bg-image .message-bubble.system {
+    background-color: rgba(var(--bg-accent-rgb, 233, 236, 239), 0.9);
+    color: var(--text-secondary);
+    backdrop-filter: blur(2px);
+}
+
+/* Fallback pour thèmes sans RGB variables */
+.theme-dark .dialogue-section.bg-image .message-bubble {
+    background-color: rgba(45, 45, 45, 0.95);
+}
+
+.theme-jarvis .dialogue-section.bg-image .message-bubble {
+    background-color: rgba(26, 35, 50, 0.95);
+}
+
+.dialogue-header {
+    display: grid;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-accent);
+    border-bottom: 1px solid var(--border);
+}
+
+.dialogue-header h2 {
+    font-size: 1.2rem;
+    color: var(--text-accent);
+}
+
+.dialogue-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.dialogue-container {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    /* 🚀 IMPORTANT - Pas de filter ou opacity ici ! */
+}
+
+/* Section saisie */
+.input-section {
+    grid-column: 1;
+    grid-row: 2;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1rem;
+}
+
+.input-container {
+    display: grid;
+}
+
+.input-row {
+    gap: 1rem;
+    display: flex;
+}
+
+.input-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Messages */
+.message-bubble {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 18px;
+    animation: slideIn 0.3s ease;
+}
+
+.message-bubble.user {
+    align-self: flex-end;
+    background: var(--text-accent);
+    color: var(--bg-primary);
+    border-bottom-right-radius: 6px;
+}
+
+.message-bubble.assistant {
+    align-self: flex-start;
+    background: var(--bg-accent);
+    color: var(--text-primary);
+    border-bottom-left-radius: 6px;
+}
+
+.message-bubble.system {
+    align-self: center;
+    background: var(--bg-accent);
+    color: var(--text-secondary);
+    font-style: italic;
+    text-align: center;
+    border-radius: 12px;
+}
+
+.message-content {
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 0.25rem;
+}
+
+/* Input de message */
+#message-input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: var(--text-accent);
+    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+/* Boutons microphone et envoi */
+.mic-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.mic-button:hover {
+    background: #157347;
+    transform: scale(1.02);
+}
+
+.mic-button.active {
+    background: var(--danger);
+    animation: pulse 1s infinite;
+}
+
+.send-button {
+    padding: 0.75rem 1rem;
+    background: var(--text-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.send-button:hover {
+    background: #0b5ed7;
+    transform: scale(1.02);
+}

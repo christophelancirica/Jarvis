@@ -1,28 +1,35 @@
-# Configuration Jarvis
-
-llm:
-  model_default: "llama3.1:8b"
-  express:
-    max_tokens: 150
-    temperature: 0.3
-  standard:
-    max_tokens: 500
-    temperature: 0.5
-  expert:
-    max_tokens: 2000
-    temperature: 0.7
-
 audio:
   input:
-    whisper_model: "base"  # tiny/base/small
-    language: "fr"
-    vad_aggressiveness: 2  # 0-3 (2 = équilibré)
-    silence_duration: 1.5  # secondes de silence pour arrêter
-    timeout: 30  # durée max d'écoute
+    language: fr
+    sensitivity: 5
+    silence_duration: 1.5
+    timeout: 30
+    vad_aggressiveness: 2
+    whisper_model: small
   output:
-    rate: 150  # Vitesse parole
-    volume: 0.9
-
+    device_index: null
+    speed: 1.0
+    volume: 90
+interface:
+  background: images/One_piece.jpg
+  background_opacity: 25
+  panels:
+    camera_visible: false
+    debug_visible: false
+    voice_lab_visible: false
+  theme: dark
+llm:
+  model: dolphin-mistral:7b
+  presets: {}
+  role: assistant_general
+  temperature: 0.7
 system:
-  log_level: "DEBUG"
-  language: "fr"
+  language: fr
+  log_level: DEBUG
+voice:
+  display_name: Samantha
+  edge_voice: fr-FR-DeniseNeural
+  embedding_path: null
+  personality: Eloise
+  sample_path: null
+  tts_model: edge-tts

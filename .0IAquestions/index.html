@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis - Assistant Vocal</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+</head>
+<body class="theme-light">
+    <!-- Header avec navigation -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span class="logo-icon">🤖</span>
+                <span class="logo-text" id="assistant-name">Jarvis</span>
+                <span class="status-indicator" id="status-indicator">●</span>
+            </div>
+        </div>
+        
+        <nav class="header-nav">
+            <button class="nav-btn" onclick="openSettings()">
+                <span class="icon">⚙️</span>
+                Paramètres
+            </button>
+            <button class="nav-btn" onclick="toggleDebug()">
+                <span class="icon">🔍</span>
+                Debug
+            </button>
+            <button class="nav-btn" onclick="toggleTheme()">
+                <span class="icon" id="theme-icon">🌙</span>
+                <span id="theme-text">Gray - blue</span>
+            </button>
+            <button class="nav-btn" onclick="showHelp()">
+                <span class="icon">❓</span>
+                Aide
+            </button>
+        </nav>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="main-content">
+        <!-- Zone dialogue (gauche haut) -->
+        <section class="dialogue-section">
+            <div class="dialogue-header">
+                <h2>💬 Conversation</h2>
+                <div class="dialogue-controls">
+                    <button class="control-btn" onclick="clearConversation()" title="Effacer la conversation">
+                        🗑️
+                    </button>
+                    <button class="control-btn" onclick="exportConversation()" title="Exporter">
+                        💾
+                    </button>
+                </div>
+            </div>
+            
+            <div class="dialogue-container" id="dialogue-container">
+                <div class="welcome-message">
+                    <div class="message-bubble system">
+                        <div class="message-content">
+                            <p>🚀 Connexion à votre assistant virtuel en cours...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Zone saisie (gauche bas) -->
+        <section class="input-section">
+            <div class="input-container">
+                <div class="input-row">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Tapez votre message ici ou utilisez le microphone..."
+                        rows="3"
+                        onkeydown="handleInputKeydown(event)"
+                    ></textarea>
+                    
+                    <div class="input-buttons">
+                        <button 
+                            class="mic-button" 
+                            id="mic-button"
+                            onclick="toggleVoiceInput()"
+                            title="Activer/Désactiver le microphone"
+                        >
+                            <span class="mic-icon">🎤</span>
+                            <span class="mic-status">Parler</span>
+                        </button>
+                        
+                        <button 
+                            class="send-button"
+                            onclick="sendMessage()"
+                            title="Envoyer le message"
+                        >
+                            ➤
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Zone debug/logs (droite) -->
+        <aside class="debug-section" id="debug-section">
+            <div class="debug-header">
+                <h3>🔍 Debug & Logs</h3>
+                <button class="close-debug" onclick="toggleDebug()">✕</button>
+            </div>
+            
+            <div class="debug-tabs">
+                <button class="tab-btn active" onclick="switchDebugTab('logs')">Logs</button>
+                <button class="tab-btn" onclick="switchDebugTab('stats')">Stats</button>
+                <button class="tab-btn" onclick="switchDebugTab('config')">Config</button>
+            </div>
+            
+            <div class="debug-content">
+                <!-- Onglet Logs -->
+                <div id="debug-logs" class="debug-tab active">
+                    <div class="log-container" id="log-container">
+                        <div class="log-entry info">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-message">Interface web initialisée</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Onglet Stats -->
+                <div id="debug-stats" class="debug-tab">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-messages">0</div>
+                            <div class="stat-label">Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-tokens">0</div>
+                            <div class="stat-label">Tokens</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-avgtime">0.0s</div>
+                            <div class="stat-label">Temps Moyen</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-tts-efficiency">100%</div>
+                            <div class="stat-label">Efficacité TTS</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Onglet Config -->
+                <div id="debug-config" class="debug-tab">
+                    <div class="config-item">
+                        <label>Personnalité:</label>
+                        <span id="config-personality">-</span>
+                    </div>
+                    <div class="config-item">
+                        <label>Modèle LLM:</label>
+                        <span id="config-llm">-</span>
+                    </div>
+                    <div class="config-item">
+                        <label>Modèle TTS:</label>
+                        <span id="config-tts">-</span>
+                    </div>
+                    <div class="config-item">
+                        <label>Périphérique Audio:</label>
+                        <span id="config-audio">-</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Modal Paramètres -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Paramètres</h2>
+                <button class="modal-close" onclick="closeSettings()">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="tab-btn active" onclick="switchSettingsTab('voice')">🔊 Voix</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('audio')">🎤 Audio</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('llm')">🧠 LLM</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('interface')">🎨 Interface</button>
+                </div>
+                
+                <div class="settings-content">
+                    <!-- Paramètres Voix -->
+                    <div id="settings-voice" class="settings-tab active">
+                        <div class="setting-group">
+                            <label for="voice-personality">Personnalité:</label>
+                            <select id="voice-personality">
+                                <option value="Jarvis">Jarvis (Masculin)</option>
+                                <option value="Samantha">Samantha (Féminin)</option>
+                                <option value="Eloise">Eloise (Jeune)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="voice-speed">Vitesse de parole:</label>
+                            <input type="range" id="voice-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <span id="voice-speed-value">1.0x</span>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="voice-volume">Volume:</label>
+                            <input type="range" id="voice-volume" min="0" max="100" value="90">
+                            <span id="voice-volume-value">90%</span>
+                        </div>
+                        
+                        <button class="test-btn" onclick="testVoice()">🔊 Tester la voix</button>
+                    </div>
+                    
+                    <!-- Paramètres Audio -->
+                    <div id="settings-audio" class="settings-tab">
+                        <div class="setting-group">
+                            <label for="audio-device">Microphone:</label>
+                            <select id="audio-device">
+                                <option value="default">Périphérique par défaut</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="audio-sensitivity">Sensibilité:</label>
+                            <input type="range" id="audio-sensitivity" min="1" max="10" value="5">
+                            <span id="audio-sensitivity-value">5</span>
+                        </div>
+                        
+                        <button class="test-btn" onclick="testMicrophone()">🎤 Tester le micro</button>
+                    </div>
+                    
+                    <!-- Paramètres LLM -->
+                    <div id="settings-llm" class="settings-tab">
+                        <div class="setting-group">
+                            <label for="llm-model">Modèle:</label>
+                            <select id="llm-model">
+                                <option value="llama3.1:8b">Llama 3.1 8B (Recommandé)</option>
+                                <option value="llama3.2:3b">Llama 3.2 3B (Rapide)</option>
+                                <option value="mistral:7b">Mistral 7B</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="llm-temperature">Créativité (Temperature):</label>
+                            <input type="range" id="llm-temperature" min="0.1" max="1.0" step="0.1" value="0.7">
+                            <span id="llm-temperature-value">0.7</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Paramètres Interface -->
+                    <div id="settings-interface" class="settings-tab">
+                        <div class="setting-group">
+                            <label for="interface-theme">Thème:</label>
+                            <select id="interface-theme">
+                                <option value="light">Light</option>
+                                <option value="dark">Gray - blue</option>
+                                <option value="jarvis">Dark - green</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="interface-background">Arrière-plan:</label>
+                            <select id="interface-background">
+                                <option value="default">Par défaut</option>
+                                <option value="jarvis-lab">Laboratoire Jarvis</option>
+                                <option value="space">Espace</option>
+                                <option value="matrix">Matrix</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <input type="checkbox" id="interface-animations">
+                            <label for="interface-animations">Animations fluides</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="resetSettings()">Réinitialiser</button>
+                <button class="btn-primary" onclick="saveSettings()">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Aide -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ Aide & Guide d'utilisation</h2>
+                <button class="modal-close" onclick="closeHelp()">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>🎤 Utilisation du microphone</h3>
+                    <p>Cliquez sur le bouton microphone pour commencer l'écoute vocale. Parlez clairement et attendez la transcription.</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>💬 Zone de conversation</h3>
+                    <p>Tapez vos messages dans la zone de saisie ou utilisez Ctrl+Entrée pour envoyer rapidement.</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>🔍 Debug et logs</h3>
+                    <p>Utilisez la zone debug (droite) pour surveiller les performances et diagnostiquer les problèmes.</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>⚙️ Paramètres</h3>
+                    <p>Personnalisez la voix, l'audio et l'interface selon vos préférences.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="static/app.js"></script>
+</body>
+</html>

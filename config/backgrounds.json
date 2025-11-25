@@ -1,0 +1,26 @@
+{
+    "backgrounds": {
+      "none": {
+        "id": "none",
+        "name": "Transparent",
+        "type": "solid",
+        "value": "transparent"
+      },
+      "white": {
+        "id": "white", 
+        "name": "Blanc",
+        "type": "solid",
+        "value": "#ffffff"
+      },
+      "dark": {
+        "id": "dark",
+        "name": "Sombre", 
+        "type": "solid",
+        "value": "#1a1a1a"
+      }
+    },
+    "default_background": "none",
+    "image_folder": "web_interface/images",
+    "default_opacity": 0.3,
+    "supported_formats": [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+}

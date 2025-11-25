@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis - Assistant Vocal</title>
+    <link rel="stylesheet" href="static/styles/index.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+</head>
+<body class="theme-light">
+    <!-- Header avec navigation -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span class="logo-icon">🤖</span>
+                <span class="logo-text" id="assistant-name">Jarvis - initialisation</span>
+                <span class="status-indicator" id="status-indicator">●</span>
+            </div>
+        </div>
+        
+        <nav class="header-nav">
+            <button class="nav-btn" onclick="toggleVoiceLab()">
+                <span class="icon">🎭</span> Clonage Voix
+            </button>
+            <button class="nav-btn" onclick="toggleCameraPanel()">
+                <span class="icon">📷</span> Vision IA
+            </button>
+
+            <button class="nav-btn" onclick="openSettings()">
+                <span class="icon">⚙️</span> Paramètres
+            </button>
+            <button class="nav-btn" onclick="toggleDebug()">
+                <span class="icon">🔍</span> Debug
+            </button>
+            <button class="nav-btn" onclick="toggleTheme()">
+                <span class="icon" id="theme-icon">🌙</span>
+                <span id="theme-text">Mode Gray - blue</span>
+            </button>
+            <button class="nav-btn" onclick="showHelp()">
+                <span class="icon">❓</span> Aide
+            </button>
+        </nav>
+    </header>
+
+    <!-- Contenu principal -->
+    <main class="main-content voice-hidden">
+        <!-- Zone dialogue (gauche haut) -->
+        <aside class="dialogue-section">
+            <section class="dialogue-section">
+                <div class="dialogue-header">
+                    <h2>💬 Conversation</h2>
+                    <div class="dialogue-controls">
+                        <button class="control-btn" onclick="clearConversation()" title="Effacer la conversation">
+                            🗑️
+                        </button>
+                        <button class="control-btn" onclick="exportConversation()" title="Exporter">
+                            💾
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="dialogue-container" id="dialogue-container">
+                    <div class="message-bubble system">
+                        <div class="message-content">
+                            <p>🚀 Connexion à votre assistant virtuel en cours...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Zone saisie (gauche bas) -->
+            <section class="input-section">
+                <div class="input-container">
+                    <div class="input-row">
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Tapez votre message ici ou utilisez le microphone..."
+                            rows="3"
+                            onkeydown="handleInputKeydown(event)"
+                        ></textarea>
+                        
+                        <div class="input-buttons">
+                            <button 
+                                class="mic-button" 
+                                id="mic-button"
+                                onclick="toggleVoiceInput()"
+                                title="Activer/Désactiver le microphone"
+                            >
+                                <span class="mic-icon">🎤</span>
+                                <span class="mic-status">Parler</span>
+                            </button>
+                            
+                            <button 
+                                class="send-button"
+                                onclick="sendMessage()"
+                                title="Envoyer le message"
+                            >
+                                ➤
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </aside>
+        <!-- Voice Lab Panel -->
+        <aside class="voice-section" id="voice-section">
+            <div class="voice-header">
+                <h3>🎭 Laboratoire Vocal</h3>
+                <button onclick="toggleVoiceLab()" class="close-voice">✖</button>
+            </div>
+            
+            <div class="setting-group">
+                <!-- Formulaire de clonage -->
+                <div class="voice-clone-form">
+                    <h4>Créer une nouvelle voix</h4>
+                    
+                    <input type="text" 
+                    id="voice-name-input" 
+                    placeholder="Nom de la voix"
+                    maxlength="50"
+                    required>
+                    
+                    <textarea id="voice-description-input" 
+                            placeholder="Description (optionnel)"
+                            rows="2"></textarea>
+                    
+                    <div class="debug-tabs"><span></span>
+                        <button id="btn-primary" onclick="startVoiceRecording()" class="btn-primary">
+                            🎙️ Enregistrer (10s max)
+                        </button>
+                        <button id="btn-secondary" onclick="stopVoiceRecording()" style="display:none" class="btn-danger">
+                            ⏹️ Arrêter
+                        </button>
+                        <div id="recording-indicator" class="recording-indicator"></div>
+                        <div id="recording-timer" style="display:none"></div>
+                    </div>
+                    
+                    <!-- Upload fichier -->
+                    <div class="upload-option">
+                        <label class="file-upload-label">
+                            <input type="file" 
+                                id="voice-upload" 
+                                accept="audio/*,video/*"
+                                style="display:none">
+                            📁 Charger un fichier audio/vidéo
+                        </label>
+                        <small>Formats: MP3, WAV, OGG, MP4, AVI, MKV... (Max 50MB)</small>
+                    </div>
+                </div>
+                
+                
+            <!-- Aperçu audio -->
+            <div id="audio-preview" style="display:none"></div>
+            
+            <!-- Bouton de sauvegarde -->
+            <div class="form-actions">
+                <button id="save-voice-btn" 
+                        onclick="saveClonedVoice()" 
+                        class="btn-success"
+                        disabled>
+                    💾 Sauvegarder la voix
+                </button>
+                <button onclick="resetVoiceForm()" class="btn-secondary">
+                    🔄 Réinitialiser
+                </button>
+            </div>
+        
+            <!-- Section test -->
+            <div class="test-section">
+                <h4>🔊 Tester une voix</h4>
+                <div class="form-group">
+                    <textarea id="test-text-input" 
+                            placeholder="Texte à tester (optionnel)"
+                            rows="2">Bonjour, ceci est un test de ma voix clonée.</textarea>
+                </div>
+            </div>
+            
+            
+            <!-- Liste des voix clonées -->
+            <div class="cloned-voices-section">
+                <h4>Mes voix clonées</h4>
+                <div id="cloned-voices-list"></div>
+            </div>
+            
+            <!-- Info XTTS -->
+            <div class="xtts-info">
+                <details>
+                    <summary>ℹ️ À propos du clonage vocal</summary>
+                    <div class="info-content">
+                        <p><strong>Technologies utilisées:</strong></p>
+                        <ul>
+                            <li>🎯 XTTS-v2 pour le clonage haute fidélité</li>
+                            <li>🎤 Whisper pour la transcription</li>
+                            <li>🔊 Edge-TTS pour les voix prédéfinies</li>
+                        </ul>
+                        <p><strong>Conseils pour un bon clonage:</strong></p>
+                        <ul>
+                            <li>Enregistrez dans un environnement calme</li>
+                            <li>Parlez clairement et naturellement</li>
+                            <li>Durée optimale: 10-20 secondes</li>
+                            <li>Évitez les bruits de fond</li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+            </div>
+        </aside>
+
+        <!-- Camera Panel -->
+        <aside class="camera-section" id="camera-section">
+            <div class="camera-header">
+                <h3>📷 Vision IA</h3>
+                <button class="close-camera" onclick="toggleCameraPanel()" >✖</button>
+            </div>
+            
+            <div class="panel-content">
+                <div class="camera-container">
+                    <video id="camera-feed" autoplay playsinline></video>
+                    <div id="camera-info"></div>
+                </div>
+                
+                <div class="camera-tabs">
+                    <button onclick="captureImage()" class="btn-primary">
+                        📸 Capturer
+                    </button>
+                    <button onclick="switchCamera()" class="btn-secondary">
+                        🔄 Changer caméra
+                    </button>
+                    <button onclick="toggleCameraFilters()" class="btn-secondary">
+                        🎨 Filtres
+                    </button>
+                </div>
+                
+                <div id="captured-images" class="captured-images-grid"></div>
+                
+                <div id="analysis-options"></div>
+                
+                <div id="camera-dev-status"></div>
+            </div>
+        </aside>
+
+        <!-- Zone debug/logs (droite) -->
+        <aside class="debug-section" id="debug-section">
+            <div class="debug-header">
+                <h3>🔍 Debug & Logs</h3>
+                <button class="close-debug" onclick="toggleDebug()">✕</button>
+            </div>
+            
+            <div class="debug-tabs">
+                <button class="tab-btn active" onclick="switchDebugTab('logs')">Logs</button>
+                <button class="tab-btn" onclick="switchDebugTab('stats')">Stats</button>
+                <button class="tab-btn" onclick="switchDebugTab('config')">Config</button>
+            </div>
+            
+            <div class="debug-content">
+                <!-- Onglet Logs -->
+                <div id="debug-logs" class="debug-tab active">
+                    <div class="log-container" id="log-container">
+                        <div class="log-entry info">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-message">Interface web initialisée</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Onglet Stats -->
+                <div id="debug-stats" class="debug-tab">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-messages">0</div>
+                            <div class="stat-label">Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-tokens">0</div>
+                            <div class="stat-label">Tokens</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-avgtime">0.0s</div>
+                            <div class="stat-label">Temps Moyen</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="stat-tts-efficiency">100%</div>
+                            <div class="stat-label">Efficacité TTS</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Onglet Config -->
+                <div id="debug-config" class="debug-tab">
+                    <div class="config-item">
+                        <label>Personnalité:</label>
+                        <span id="config-personality">-</span>
+                    </div>
+                    <div class="config-item">
+                        <label>Modèle LLM:</label>
+                        <span id="config-llm">-</span>
+                    </div>
+                    <div class="config-item">
+                        <label>Modèle TTS:</label>
+                        <span id="config-tts">-</span>
+                    </div>
+                    <div class="config-item">
+                        <label>Périphérique Audio:</label>
+                        <span id="config-audio">-</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Modal Paramètres -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Paramètres</h2>
+                <button class="modal-close" onclick="closeSettings()">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="tab-btn active" onclick="switchSettingsTab('voice')">🔊 Voix</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('audio')">🎤 Audio</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('llm')">🧠 LLM</button>
+                    <button class="tab-btn" onclick="switchSettingsTab('interface')">🎨 Interface</button>
+                </div>
+                
+                <div class="settings-content">
+                    <!-- Paramètres Voix -->
+                    <div id="settings-voice" class="settings-tab active">
+                        <div class="setting-group">
+                            <label for="voice-personality">Personnalité:</label>
+                            <select id="voice-personality">
+                                <option value="Jarvis">Chargement...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="voice-speed">Vitesse de parole:</label>
+                            <input type="range" id="voice-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                            <span id="voice-speed-value">1.0x</span>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="voice-volume">Volume:</label>
+                            <input type="range" id="voice-volume" min="0" max="100" value="90">
+                            <span id="voice-volume-value">90%</span>
+                        </div>
+                        
+                        <button class="test-btn" onclick="testVoice()">🔊 Tester la voix</button>
+                    </div>
+                    
+                    <!-- Paramètres Audio -->
+                    <div id="settings-audio" class="settings-tab">
+                        <div class="setting-group">
+                            <label for="audio-device">Microphone:</label>
+                            <select id="audio-device">
+                                <option value="default">Périphérique par défaut</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="audio-sensitivity">Sensibilité:</label>
+                            <input type="range" id="audio-sensitivity" min="1" max="10" value="5">
+                            <span id="audio-sensitivity-value">5</span>
+                        </div>
+                        
+                        <button class="test-btn" onclick="testMicrophone()">🎤 Tester le micro</button>
+                    </div>
+                    
+                    <!-- Paramètres LLM -->
+                    <div id="settings-llm" class="settings-tab">
+                        <div class="setting-group">
+                            <label for="llm-model">Modèle:</label>
+                            <select id="llm-model">
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="role-select">
+                                <i class="icon">👨‍🏫</i> Rôle
+                            </label>
+                            <select id="role-select" class="select-input">
+                                <!-- Sera peuplé dynamiquement -->
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="llm-temperature">Créativité (Temperature):</label>
+                            <input type="range" id="llm-temperature" min="0.1" max="1.0" step="0.1" value="0.7">
+                            <span id="llm-temperature-value">0.7</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Paramètres Interface -->
+                    <div id="settings-interface" class="settings-tab">
+                        <div class="setting-group">
+                            <label for="interface-theme">Thème:</label>
+                            <select id="interface-theme">
+                                <option value="light">Light</option>
+                                <option value="dark">Gray - blue</option>
+                                <option value="jarvis">Dark - green</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="interface-background">Arrière-plan:</label>
+                            <select id="interface-background">
+                                <option value="default">Par défaut</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <label for="background-opacity">Transparence arrière-plan:</label>
+                            <input type="range" id="background-opacity" min="5" max="100" step="5" value="30">
+                            <span id="background-opacity-value">30%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="resetSettings()">Réinitialiser</button>
+                <button class="btn-primary" onclick="saveSettingsFromModal()">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Aide -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ Aide & Guide d'utilisation</h2>
+                <button class="modal-close" onclick="closeHelp()">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3>🎤 Utilisation du microphone</h3>
+                    <p>Cliquez sur le bouton microphone pour commencer l'écoute vocale. Parlez clairement et attendez la transcription.</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>M</kbd> : Activer le microphone</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>💬 Zone de conversation</h3>
+                    <p>Tapez vos messages dans la zone de saisie ou utilisez Ctrl+Entrée pour envoyer rapidement.</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> : Focus sur la zone de saisie </p>
+                    <p><kbd>Ctrl</kbd> + <kbd>Enter</kbd> : Valider le message</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>f</kbd> : Changer de thème</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>🔍 Debug et logs</h3>
+                    <p>Utilisez la zone debug (droite) pour surveiller les performances et diagnostiquer les problèmes.</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>d</kbd> : Ouvrir/Fermer l'onglet Debug</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>Shift</kbd>  + <kbd>c</kbd> : Exporter les logs</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3>⚙️ Paramètres</h3>
+                    <p>Personnalisez la voix, l'audio et l'interface selon vos préférences.</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>r</kbd> : Redémarrer Jarvis</p>
+                    <p><kbd>Ctrl</kbd> + <kbd>f</kbd> : Changer de thème</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- 🧠 Scripts Modulaires - Architecture Cerveau -->
+    <!-- Ordre d'import CRITIQUE pour les dépendances -->
+    
+    <!-- 1. Variables globales et état (Cortex Préfrontal) -->
+    <script src="static/js/variables-globals.js"></script>
+    
+    <!-- 2. Fonctions utilitaires (Boîte à outils) -->
+    <script src="static/js/utils.js"></script>
+    
+    <!-- 3. Chargeur de configuration (Hippocampe) -->
+    <script src="static/js/config-loader.js"></script>
+    <script src="static/js/Settings-frontend.js"></script>
+    
+    <!-- 4. Gestionnaire de thèmes (Lobes Occipitaux) -->
+    <script src="static/js/theme-manager.js"></script>
+    
+    <!-- 5. Debug et logs (Système de surveillance) -->
+    <script src="static/js/debug-logger.js"></script>
+    
+    <!-- 6. Gestionnaire WebSocket (Thalamus) -->
+    <script src="static/js/websocket-manager.js"></script>
+    
+    <!-- 7. Gestionnaire de messages (Lobes Temporaux) -->
+    <script src="static/js/message-handler.js"></script>
+    
+    <!-- 8. Gestion des voix (Hypothalamus) -->
+    <script src="static/js/voice-manager.js"></script>
+    <script src="static/js/settings-modal.js"></script>
+    <script src="static/js/voice-lab.js"></script>
+
+    <!-- 9. Script specifique sur les outils annexe -->
+    <script src="static/js/camera-panel.js"></script>
+
+    <!-- 10. Coordination principale (Tronc Cérébral) -->
+    <script src="static/js/app-main.js"></script>
+         
+</body>
+</html>

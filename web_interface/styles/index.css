@@ -1,0 +1,42 @@
+/* ===========================
+   Main CSS - Import all modular styles
+   =========================== */
+
+/* 1. Base styles (reset, variables, typography) */
+@import url('./base.css');
+
+/* 2. Layout and grid structure */
+@import url('./layout.css');
+
+/* 3. Reusable components */
+@import url('./components.css');
+
+/* 4. Panel-specific styles */
+@import url('./panels/dialogue.css');
+@import url('./panels/voice.css');
+@import url('./panels/camera.css');
+@import url('./panels/debug.css');
+@import url('./panels/settings.css');
+
+/* 
+   Structure CSS modulaire:
+   
+   styles/
+   ├── index.css       # Fichier principal (ce fichier)
+   ├── base.css        # Reset, variables, typographie
+   ├── layout.css      # Grille, structure
+   ├── components.css  # Composants réutilisables
+   ├── panels/
+   │   ├── voice.css     # Panel vocal
+   │   ├── camera.css    # Panel caméra
+   │   └── settings.css  # Panel paramètres
+   └── themes/
+       ├── dark.css    # Thème sombre
+       └── light.css   # Thème clair + Jarvis
+       
+   Pour utiliser un thème spécifique, ajoutez la classe correspondante
+   au body ou à l'élément racine:
+   - .theme-light (par défaut)
+   - .theme-dark
+   - .theme-jarvis
+*/

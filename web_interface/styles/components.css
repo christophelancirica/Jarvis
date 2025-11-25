@@ -1,0 +1,388 @@
+/* Boutons de navigation */
+.nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--bg-accent);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.nav-btn:hover {
+    background: var(--text-accent);
+    color: var(--bg-primary);
+    transform: translateY(-1px);
+}
+
+.icon {
+    font-size: 1.1rem;
+}
+
+/* Boutons de contrôle */
+.control-btn {
+    padding: 0.5rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Modals */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideInScale 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+    color: var(--text-accent);
+    font-size: 1.3rem;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--bg-accent);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+/* Inputs généraux */
+.setting-group input,
+.setting-group textarea,
+.setting-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.setting-group input[type="range"] {
+    width: calc(100% - 60px);
+    margin-right: 10px;
+}
+
+.setting-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+/* Boutons généraux */
+.btn-primary {
+    background: var(--text-accent);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #0b5ed7;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--bg-accent);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: var(--bg-secondary);
+}
+
+.test-btn {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.test-btn:hover {
+    background: #157347;
+}
+
+/* Form groups */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
+}
+
+/* Variantes de boutons supplémentaires */
+.btn-primary, .btn-success, .btn-danger, .btn-secondary {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-success {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.btn-success:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Stats génériques */
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+/* Cards génériques */
+.audio-preview-card,
+.file-info-card {
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 2px solid var(--accent-color);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+
+.no-voices {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.no-voices p {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.xtts-info {
+    background: var(--bg-primary);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+}
+
+.xtts-info summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 10px;
+}
+
+.info-content {
+    padding: 20px 10px 10px;
+}
+
+/* Dev status */
+.dev-status {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+    border: 2px dashed #ffc107;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.feature-roadmap {
+    margin-top: 20px;
+}
+
+.feature-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: var(--bg-primary);
+    border-radius: 8px;
+}
+
+.future-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #555 !important;
+}
+
+/* File upload */
+.file-upload-label {
+    display: inline-block;
+    padding: 12px 24px;
+    background: var(--bg-primary);
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.file-upload-label:hover {
+    background: var(--bg-secondary);
+    border-color: var(--accent-color);
+}
+
+/* Form actions */
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Recording indicator */
+.recording-indicator {
+    width: 20px;
+    height: 20px;
+    background: #ff4444;
+    border-radius: 50%;
+    opacity: 0;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.recording-indicator.active {
+    animation: pulse 1s infinite;
+}
+
+.recording-timer {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Panels content */
+.panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}

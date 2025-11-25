@@ -1,0 +1,113 @@
+{
+  "voices": {
+    "Jarvis": {
+      "id": "Jarvis",
+      "name": "Jarvis",
+      "display_name": "Jarvis (Masculin - Russe)",
+      "gender": "male",
+      "model": "tts_models/fr/css10/vits",
+      "description": "Voix masculine russe, style professeur",
+      "voice_type": "adult_male_russian",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "personality": "Jarvis",
+      "type": "standard",
+      "voice_id": "Jarvis"
+    },
+    "Samantha": {
+      "id": "Samantha",
+      "name": "Samantha",
+      "display_name": "Samantha (Féminin)",
+      "gender": "female",
+      "model": "edge-tts",
+      "edge_voice": "fr-FR-DeniseNeural",
+      "description": "Voix féminine chaleureuse et empathique",
+      "voice_type": "adult_female",
+      "personality_config": {
+        "voice_speed": 1.1,
+        "voice_volume": 85
+      },
+      "personality": "Samantha",
+      "type": "standard",
+      "voice_id": "Samantha"
+    },
+    "Eloise": {
+      "id": "Eloise",
+      "name": "Eloise",
+      "display_name": "Eloise (Petite fille)",
+      "gender": "female",
+      "model": "edge-tts",
+      "edge_voice": "fr-FR-EloiseNeural",
+      "description": "Voix de petite fille, dynamique et enjouée",
+      "voice_type": "child_female",
+      "personality_config": {
+        "voice_speed": 1.2,
+        "voice_volume": 95
+      },
+      "personality": "Eloise",
+      "type": "standard",
+      "voice_id": "Eloise"
+    },
+    "Josephine": {
+      "id": "Josephine",
+      "name": "Josephine",
+      "display_name": "Josephine (Professionnelle)",
+      "gender": "female",
+      "model": "edge-tts",
+      "edge_voice": "fr-FR-JosephineNeural",
+      "description": "Voix féminine professionnelle et moderne",
+      "voice_type": "adult_female_professional",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 88
+      },
+      "personality": "Josephine",
+      "type": "standard",
+      "voice_id": "Josephine"
+    }
+  },
+  "default_voice": "Jarvis",
+  "demo_text": "Bonjour, je suis votre assistant personnel. Comment puis-je vous aider aujourd'hui ?",
+  "cloned_voices": {
+    "cloned_ffe046c7": {
+      "id": "cloned_ffe046c7",
+      "name": "Lectrice - Calme et clair",
+      "display_name": "🎭 Lectrice - Calme et clair",
+      "gender": "unknown",
+      "model": "xtts-v2",
+      "sample_path": "cloned_voices\\samples\\cloned_ffe046c7.wav",
+      "description": "Voix clonée le 10/11/2025",
+      "voice_type": "cloned",
+      "duration": 19.423900226757368,
+      "sample_rate": 22050,
+      "created_at": 1762787010.9642298,
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "processing_status": "ready",
+      "embedding_path": "cloned_voices\\samples\\cloned_ffe046c7.pt"
+    },
+    "cloned_ebf120b2": {
+      "id": "cloned_ebf120b2",
+      "name": "premier test2",
+      "display_name": "🎭 premier test2",
+      "gender": "unknown",
+      "model": "xtts-v2",
+      "sample_path": "cloned_voices\\samples\\cloned_ebf120b2.wav",
+      "description": "Voix clonée le 13/11/2025",
+      "voice_type": "cloned",
+      "duration": 40.06965986394558,
+      "sample_rate": 22050,
+      "created_at": 1763029038.138143,
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "processing_status": "ready",
+      "embedding_path": "cloned_voices\\samples\\cloned_ebf120b2.pt"
+    }
+  }
+}

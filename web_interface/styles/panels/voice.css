@@ -1,0 +1,202 @@
+.voice-section {
+    grid-row: 1;
+    grid-column: 2; 
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    max-height: 90vh;  /* Augmenter la hauteur */
+    overflow-y: auto;  /* Activer le scrolling */
+}
+
+/* Zone de liste des voix */
+#cloned-voices-list {
+    max-height: 400px;  /* Augmenter de 200px à 400px */
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.voice-section.hidden {
+    display: none;
+}
+
+.voice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-accent);
+    border-bottom: 1px solid var(--border);
+}
+
+.voice-header h3 {
+    font-size: 1.1rem;
+    color: var(--text-accent);
+}
+
+.close-voice {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-voice:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* Recording section */
+.recording-section {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.recording-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* Voice Lab */
+.voice-clone-form {
+    background: var(--bg-primary);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+/* Voice cards - première version */
+.voice-card {
+    background: var(--bg-primary);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.voice-card:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.voice-card.selected {
+    border-color: var(--accent-color);
+    background: rgba(var(--accent-rgb), 0.1);
+}
+
+.voice-info h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.voice-info p {
+    margin: 0 0 8px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.voice-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.voice-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.voice-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s;
+    background: var(--bg-secondary);
+}
+
+.voice-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    background: var(--accent-color);
+}
+
+.voice-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.badge-active {
+    background: var(--accent-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 10px;
+}
+
+.voice-stats-section {
+    background: var(--bg-primary);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+}
+
+/* Voice cards - deuxième version (du fichier original) */
+.voice-card {
+    background: var(--bg-primary);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.voice-card:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.voice-card.selected {
+    border: 2px solid var(--accent-color);
+}
+
+.voice-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.voice-btn {
+    width: 35px;
+    height: 35px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+}

@@ -1,0 +1,142 @@
+{
+    "llm_models": {
+        "llama3.1:8b": {
+            "id": "llama3.1:8b",
+            "name": "Llama 3.1 8B",
+            "display_name": "Llama 3.1 8B (Recommandé)",
+            "description": "Modèle équilibré entre vitesse et qualité",
+            "size": "8B paramètres",
+            "ram_required": "8GB",
+            "speed": "moyenne (5-15 tok/s)",
+            "quality": "haute",
+            "available": true,
+            "default": true,
+            "provider": "ollama",
+            "complexity_support": {
+                "express": {
+                    "max_tokens": 150,
+                    "temperature": 0.3,
+                    "typical_time": "1-2s"
+                },
+                "standard": {
+                    "max_tokens": 500,
+                    "temperature": 0.5,
+                    "typical_time": "3-5s"
+                },
+                "expert": {
+                    "max_tokens": 2000,
+                    "temperature": 0.7,
+                    "typical_time": "10-15s"
+                }
+            }
+        },
+        "llama3.2:3b": {
+            "id": "llama3.2:3b",
+            "name": "Llama 3.2 3B",
+            "display_name": "Llama 3.2 3B (Rapide)",
+            "description": "Modèle rapide pour réponses simples",
+            "size": "3B paramètres",
+            "ram_required": "4GB",
+            "speed": "rapide (15-30 tok/s)",
+            "quality": "moyenne",
+            "available": false,
+            "default": false,
+            "provider": "ollama",
+            "install_command": "ollama pull llama3.2:3b",
+            "install_note": "Téléchargement ~2GB requis",
+            "complexity_support": {
+                "express": {
+                    "max_tokens": 100,
+                    "temperature": 0.2,
+                    "typical_time": "0.5-1s"
+                },
+                "standard": {
+                    "max_tokens": 300,
+                    "temperature": 0.4,
+                    "typical_time": "1-2s"
+                },
+                "expert": {
+                    "max_tokens": 800,
+                    "temperature": 0.6,
+                    "typical_time": "3-5s"
+                }
+            }
+        },
+        "mistral:7b": {
+            "id": "mistral:7b",
+            "name": "Mistral 7B",
+            "display_name": "Mistral 7B (Polyvalent)",
+            "description": "Modèle polyvalent pour usages avancés",
+            "size": "7B paramètres",
+            "ram_required": "7GB",
+            "speed": "moyenne (8-18 tok/s)",
+            "quality": "haute",
+            "available": false,
+            "default": false,
+            "provider": "ollama",
+            "install_command": "ollama pull mistral:7b",
+            "install_note": "Téléchargement ~4GB requis",
+            "complexity_support": {
+                "express": {
+                    "max_tokens": 150,
+                    "temperature": 0.3,
+                    "typical_time": "1-2s"
+                },
+                "standard": {
+                    "max_tokens": 600,
+                    "temperature": 0.5,
+                    "typical_time": "4-6s"
+                },
+                "expert": {
+                    "max_tokens": 2500,
+                    "temperature": 0.8,
+                    "typical_time": "15-20s"
+                }
+            }
+        },
+        "qwen2.5:7b": {
+            "id": "qwen2.5:7b",
+            "name": "Qwen 2.5 7B",
+            "display_name": "Qwen 2.5 7B (Multilingue)",
+            "description": "Excellent modèle pour le français et les langues mixtes",
+            "size": "7B paramètres",
+            "ram_required": "7GB",
+            "speed": "moyenne (10-20 tok/s)",
+            "quality": "très haute",
+            "available": false,
+            "default": false,
+            "provider": "ollama",
+            "install_command": "ollama pull qwen2.5:7b",
+            "install_note": "Téléchargement ~4GB requis - Excellent en français",
+            "complexity_support": {
+                "express": {
+                    "max_tokens": 150,
+                    "temperature": 0.3,
+                    "typical_time": "1-2s"
+                },
+                "standard": {
+                    "max_tokens": 600,
+                    "temperature": 0.5,
+                    "typical_time": "3-5s"
+                },
+                "expert": {
+                    "max_tokens": 2500,
+                    "temperature": 0.7,
+                    "typical_time": "12-18s"
+                }
+            }
+        }
+    },
+    "config": {
+        "default_model": "llama3.1:8b",
+        "fallback_model": "llama3.1:8b",
+        "auto_install": false,
+        "complexity_detection": {
+            "enabled": true,
+            "keywords": {
+                "express": ["salut", "bonjour", "heure", "merci", "date", "oui", "non"],
+                "expert": ["analyse", "explique", "comprend", "pourquoi", "comment", "compare", "projet", "plan"]
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+# Configuration Jarvis
+
+llm:
+  model_default: "llama3.1:8b"
+  express:
+    max_tokens: 150
+    temperature: 0.3
+  standard:
+    max_tokens: 500
+    temperature: 0.5
+  expert:
+    max_tokens: 2000
+    temperature: 0.7
+
+audio:
+  input:
+    whisper_model: "small"   # tiny/base/small/medium/large
+    language: "fr"
+    vad_aggressiveness: 2   # 0-3 (2 = équilibré)
+    silence_duration: 1.5   # secondes de silence pour arrêter
+    timeout: 30             # durée max d'écoute
+  output:
+    rate: 170               # Vitesse parole
+    volume: 0.9
+
+system:
+  log_level: "DEBUG"      # STANDARD/INFO/DEBUG
+  language: "fr"

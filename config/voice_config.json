@@ -1,5 +1,8 @@
 {
   "voice_id": "2",
-  "personality": "Samantha",
-  "model": "tts_models/multilingual/multi-dataset/xtts_v2"
+  "personality": "cloned_ffe046c7",
+  "model": "xtts-v2",
+  "edge_voice": null,
+  "sample_path": "cloned_voices/samples/cloned_ffe046c7.wav",
+  "embedding_path": null
 }

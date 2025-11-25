@@ -1,0 +1,48 @@
+/* Settings */
+.settings-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 0.25rem;
+}
+
+.settings-tab {
+    display: none;
+}
+
+.settings-tab.active {
+    display: block;
+}
+
+.setting-group {
+    margin-bottom: 1.5rem;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Help */
+.help-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.help-section:last-child {
+    border-bottom: none;
+}
+
+.help-section h3 {
+    color: var(--text-accent);
+    margin-bottom: 0.5rem;
+}
+
+.help-section p {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}

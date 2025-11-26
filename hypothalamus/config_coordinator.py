@@ -28,10 +28,12 @@ class ConfigCoordinator:
             # 1. Validation simple
             validated_config = self._validate_config(new_config)
             
-            # 2. Application voix si nécessaire
-            if 'personality' in validated_config:
+            # 2. Application des changements
+            if 'voice' in validated_config:
                 await self._apply_voice_changes(validated_config)
-            
+            if 'llm' in validated_config and 'model' in validated_config['llm']:
+                await self._apply_llm_changes(validated_config)
+
             # 3. 🚀 SAUVEGARDE UNIFIÉE - Une seule ligne !
             success = config.update_config(validated_config)
             
@@ -115,6 +117,23 @@ class ConfigCoordinator:
                 
         except Exception as e:
             log.error(f"❌ Erreur application voix: {e}")
+
+    async def _apply_llm_changes(self, config: Dict[str, Any]):
+        """Application des changements de modèle LLM."""
+        try:
+            if not self.conversation_flow:
+                log.warning("ConversationFlow non disponible pour le changement de LLM.")
+                return
+
+            llm_config = config.get('llm', {})
+            model_name = llm_config.get('model')
+
+            if model_name:
+                await self.conversation_flow.reload_llm(model_name)
+                log.success(f"🤖 Modèle LLM appliqué : {model_name}")
+
+        except Exception as e:
+            log.error(f"❌ Erreur application modèle LLM : {e}")
     
     def get_current_config(self) -> Dict[str, Any]:
         """Retourne la configuration actuelle"""

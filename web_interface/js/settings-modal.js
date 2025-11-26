@@ -643,5 +643,51 @@ window.addEventListener('beforeunload', function() {
     flushBatchedChanges();
 });
 
+/**
+ * Teste la voix actuellement sélectionnée dans les paramètres
+ */
+async function testVoice() {
+    const voiceSelect = document.getElementById('voice-personality');
+    if (!voiceSelect) {
+        showToast('Erreur: Sélecteur de voix introuvable.', 'error');
+        return;
+    }
+
+    const voiceId = voiceSelect.value;
+    if (!voiceId) {
+        showToast('Veuillez sélectionner une voix.', 'warning');
+        return;
+    }
+
+    try {
+        showToast(`🔊 Test de la voix : ${voiceSelect.options[voiceSelect.selectedIndex].text}...`, 'info');
+
+        const response = await fetch('/api/voice/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                voice_id: voiceId,
+                text: "Bonjour, ceci est un test de la voix sélectionnée."
+            })
+        });
+
+        if (response.ok) {
+            addLogEntry(`🔊 Test de la voix '${voiceId}' envoyé.`, 'info');
+        } else {
+            const error = await response.json();
+            const errorMessage = error.message || 'Le test de la voix a échoué.';
+            showToast(`❌ Erreur : ${errorMessage}`, 'error');
+            addLogEntry(`❌ Erreur test voix : ${errorMessage}`, 'error');
+        }
+
+    } catch (error) {
+        const errorMessage = error.message || 'Une erreur inattendue est survenue.';
+        showToast(`❌ Erreur : ${errorMessage}`, 'error');
+        addLogEntry(`❌ Erreur test voix : ${errorMessage}`, 'error');
+    }
+}
+
 // Initialiser les événements dès que le DOM est prêt
 document.addEventListener('DOMContentLoaded', initializeSettingsEvents);

@@ -94,11 +94,8 @@ function addLogEntry(message, type = 'info') {
     logDiv.appendChild(messageSpan);
     container.appendChild(logDiv);
     
-    // Limiter le nombre de logs pour éviter les problèmes de performance
-    const maxLogs = 100;
-    while (container.children.length > maxLogs) {
-        container.removeChild(container.firstChild);
-    }
+    // Appel au nettoyage pour limiter le nombre de logs
+    cleanupLogs();
     
     // Scroll automatique vers le bas
     container.scrollTop = container.scrollHeight;
@@ -107,6 +104,19 @@ function addLogEntry(message, type = 'info') {
     document.dispatchEvent(new CustomEvent('logAdded', {
         detail: { message, type, timestamp: new Date() }
     }));
+}
+
+/**
+ * Nettoie les anciens logs du DOM pour éviter les surcharges mémoire
+ */
+function cleanupLogs() {
+    const container = document.getElementById('log-container');
+    if (!container) return;
+
+    const maxLogs = 100; // Garde les 100 logs les plus récents
+    while (container.children.length > maxLogs) {
+        container.removeChild(container.firstChild);
+    }
 }
 
 /**

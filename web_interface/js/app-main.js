@@ -180,6 +180,7 @@ async function initializeModules() {
         await loadRolesFromAPI();
         await loadBackgroundsFromAPI();
         await loadModelsFromAPI();
+        await loadAudioDevicesFromAPI();
         
         // ✅ Visibilité des panneaux
         updateVoiceVisibility();
@@ -344,6 +345,51 @@ async function loadBackgroundsFromAPI() {
         }
     } catch (error) {
         addLogEntry(`❌ Erreur chargement backgrounds: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Charge la liste des périphériques audio depuis l'API et peuple le sélecteur.
+ */
+async function loadAudioDevicesFromAPI() {
+    try {
+        const response = await fetch('/api/audio/devices');
+        const data = await response.json();
+
+        const deviceSelect = document.getElementById('audio-device');
+        if (deviceSelect && data.success && data.devices) {
+            deviceSelect.innerHTML = ''; // Vide les options existantes
+
+            if (data.devices.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "Aucun microphone trouvé";
+                option.disabled = true;
+                deviceSelect.appendChild(option);
+            } else {
+                data.devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.index;
+                    option.textContent = device.name;
+                    deviceSelect.appendChild(option);
+                });
+            }
+
+            // Pré-sélectionner le périphérique sauvegardé si disponible
+            if (window.jarvisConfig?.audio?.input?.device_index) {
+                deviceSelect.value = window.jarvisConfig.audio.input.device_index;
+            }
+
+            addLogEntry(`🎤 ${data.devices.length} microphones chargés`, 'info');
+        } else if (!data.success) {
+            throw new Error(data.error || 'Réponse invalide du serveur');
+        }
+    } catch (error) {
+        addLogEntry(`❌ Erreur chargement des périphériques audio : ${error.message}`, 'error');
+        const deviceSelect = document.getElementById('audio-device');
+        if (deviceSelect) {
+            deviceSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
     }
 }
 

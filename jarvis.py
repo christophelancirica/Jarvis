@@ -11,6 +11,7 @@ from pathlib import Path
 import uvicorn
 from colorama import init, Fore, Style
 from cortex_prefrontal.model_manager import ModelManager
+from hypothalamus.device_manager import DeviceManager
 import asyncio
 import json
 from typing import Dict, Any
@@ -275,16 +276,13 @@ def create_web_app():
     
     @app.get("/api/models")
     async def get_models():
+        """Retourne la liste des modèles LLM disponibles directement depuis Ollama."""
         try:
-            status = model_manager.get_model_status()
-            installed_models = [
-                model_id for model_id, model_info in status['models'].items() 
-                if model_info.get('installed', False)
-            ]
+            installed_models = model_manager.get_installed_models()
             return {
                 "success": True,
                 "models": installed_models,
-                "current_model": status.get('current_model')
+                "current_model": model_manager.get_current_model()
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -299,6 +297,19 @@ def create_web_app():
             return {"error": "Config coordinator non initialisé"}
         except Exception as e:
             return {"error": f"Erreur: {e}"}
+
+    @app.get("/api/audio/devices")
+    async def get_audio_devices():
+        """Retourne la liste des périphériques audio d'entrée."""
+        try:
+            device_manager = DeviceManager()
+            devices = device_manager.get_available_devices()
+            return {"success": True, "devices": devices}
+        except Exception as e:
+            # Remplacer print par le logger standard serait mieux, mais log n'est pas défini ici.
+            # On garde print pour le moment, mais c'est un point d'amélioration.
+            print(f"{Fore.RED}❌ Erreur API get_audio_devices: {e}{Style.RESET_ALL}")
+            return {"success": False, "error": str(e), "devices": []}
 
     @app.get("/api/backgrounds")
     async def get_backgrounds():
@@ -375,36 +386,38 @@ def create_web_app():
 
     @app.post("/api/voice/test")
     async def test_voice(request: dict):
-        """Teste une voix avec du texte"""
+        """Teste une voix (standard ou clonée) avec du texte."""
         try:
+            _, _, flow = init_modules_lazy()
+            if not flow:
+                raise Exception("ConversationFlow non initialisé")
+
             voice_id = request['voice_id']
-            text = request.get('text', 'Test de voix')
+            text = request.get('text', 'Bonjour, ceci est un test de la voix sélectionnée.')
+
+            # On s'assure que le module TTS est prêt
+            if not flow.tts:
+                await flow.auto_initialize()
+
+            # On utilise directement le module TTS du conversation_flow
+            # qui est déjà configuré. On doit juste lui faire jouer un son
+            # avec une voix potentiellement différente.
+            # La méthode `speak` est idéale pour ça si elle accepte un override de la voix.
+            # En l'absence d'une telle méthode, on recharge temporairement.
             
-            # Synthétiser l'audio
-            audio_data = await voice_cloner.synthesize_with_voice(text, voice_id)
+            # NOTE: Pour une meilleure architecture, flow.tts.speak devrait pouvoir
+            # prendre un `voice_id` en paramètre. Solution temporaire :
+            current_personality = flow.get_personality()
+            await flow.reload_tts(None, voice_id) # Recharge avec la nouvelle voix
+
+            await flow.tts.speak(text)
+
+            # Revenir à la voix originale
+            await flow.reload_tts(None, current_personality)
             
-            if audio_data:
-                # Jouer l'audio via TTS existant
-                from lobes_temporaux.tts import TextToSpeech
-                tts = TextToSpeech()
-                
-                # Sauvegarder temporairement et jouer
-                import tempfile
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as f:
-                    f.write(audio_data)
-                    temp_path = f.name
-                
-                tts.play_audio_file(temp_path)
-                
-                # Nettoyer
-                import os
-                os.remove(temp_path)
-                
-                return {"success": True}
-            else:
-                return {"success": False, "error": "Synthèse échouée"}
-                
+            return {"success": True}
         except Exception as e:
+            print(f"{Fore.RED}❌ Erreur API test_voice: {e}{Style.RESET_ALL}")
             return {"success": False, "error": str(e)}
 
     @app.post("/api/voice/set-default")

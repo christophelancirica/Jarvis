@@ -322,8 +322,14 @@ function previewTheme(theme) {
  */
 function initializeThemeEvents() {
     loadThemesConfig();
+
     // Gestion du changement depuis les paramètres
-    document.addEventListener('DOMContentLoaded', handleThemeSelectChange);
+    const themeSelect = document.getElementById('interface-theme');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', (event) => {
+            applyThemeFromSettings(event.target.value);
+        });
+    }
     
     // Gestion du raccourci clavier pour changer de thème
     document.addEventListener('keydown', function(event) {

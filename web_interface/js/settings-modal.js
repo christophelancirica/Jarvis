@@ -349,29 +349,33 @@ async function saveSettingsFromModal() {
         // Flush final des previews en attente
         flushBatchedChanges();
         
-        // ✅ Récupérer les nouvelles valeurs de la modal
+        const changes = {};
+        
+        // Helper pour ajouter un changement si la valeur est différente
+        const addChange = (key, newValue, currentValue) => {
+            if (newValue !== currentValue) {
+                changes[key] = newValue;
+            }
+        };
+
         const currentSettings = await getCurrentServerConfig();
-        const newSettings = JSON.parse(JSON.stringify(currentSettings));
+
+        // Voix
+        addChange('personality', document.getElementById('voice-personality')?.value, currentSettings.voice?.personality);
+        addChange('voice_speed', parseFloat(document.getElementById('voice-speed')?.value || 1.0), currentSettings.audio?.output?.speed);
+        addChange('voice_volume', parseInt(document.getElementById('voice-volume')?.value || 90), currentSettings.audio?.output?.volume);
         
-        // Configuration VOIX (voice)
-        newSettings.voice.personality = document.getElementById('voice-personality')?.value;
-        // La vitesse et le volume sont dans audio.output
-        newSettings.audio.output.speed = parseFloat(document.getElementById('voice-speed')?.value || 1.0);
-        newSettings.audio.output.volume = parseInt(document.getElementById('voice-volume')?.value || 90);
-        
-        // Configuration LLM
-        newSettings.llm.model = document.getElementById('llm-model')?.value;
-        newSettings.llm.temperature = parseFloat(document.getElementById('llm-temperature')?.value || 0.7);
-        
-        // Configuration INTERFACE (interface)
-        newSettings.interface.theme = document.getElementById('interface-theme')?.value;
-        newSettings.interface.background = document.getElementById('interface-background')?.value;
-        newSettings.interface.background_opacity = parseInt(document.getElementById('background-opacity')?.value || 30);
-        
-        // Configuration AUDIO INPUT (audio.input)
-        newSettings.audio.input.sensitivity = parseInt(document.getElementById('audio-sensitivity')?.value || 5);
-        
-        const changes = getChangedSettings(currentSettings, newSettings);
+        // LLM
+        addChange('llm_model', document.getElementById('llm-model')?.value, currentSettings.llm?.model);
+        addChange('llm_temperature', parseFloat(document.getElementById('llm-temperature')?.value || 0.7), currentSettings.llm?.temperature);
+
+        // Interface
+        addChange('theme', document.getElementById('interface-theme')?.value, currentSettings.interface?.theme);
+        addChange('background', document.getElementById('interface-background')?.value, currentSettings.interface?.background);
+        addChange('background_opacity', parseInt(document.getElementById('background-opacity')?.value || 30), currentSettings.interface?.background_opacity);
+
+        // Audio
+        addChange('audio_device', document.getElementById('audio-device')?.value, currentSettings.audio?.input?.device_index);
         console.log('🔍 [DEBUG] Changements détectés:', changes);
         
         if (Object.keys(changes).length === 0) {
@@ -648,8 +652,9 @@ window.addEventListener('beforeunload', function() {
  */
 async function testVoice() {
     const voiceSelect = document.getElementById('voice-personality');
-    if (!voiceSelect) {
-        showToast('Erreur: Sélecteur de voix introuvable.', 'error');
+    const testButton = document.querySelector('button[onclick="testVoice()"]');
+    if (!voiceSelect || !testButton) {
+        showToast('Erreur: Composants introuvables.', 'error');
         return;
     }
 
@@ -658,6 +663,11 @@ async function testVoice() {
         showToast('Veuillez sélectionner une voix.', 'warning');
         return;
     }
+
+    // Gérer l'état du bouton
+    const originalButtonText = testButton.innerHTML;
+    testButton.innerHTML = '🔊 Test en cours...';
+    testButton.disabled = true;
 
     try {
         showToast(`🔊 Test de la voix : ${voiceSelect.options[voiceSelect.selectedIndex].text}...`, 'info');
@@ -686,6 +696,12 @@ async function testVoice() {
         const errorMessage = error.message || 'Une erreur inattendue est survenue.';
         showToast(`❌ Erreur : ${errorMessage}`, 'error');
         addLogEntry(`❌ Erreur test voix : ${errorMessage}`, 'error');
+    } finally {
+        // Restaurer l'état du bouton
+        if (testButton && originalButtonText) {
+            testButton.innerHTML = originalButtonText;
+            testButton.disabled = false;
+        }
     }
 }
 

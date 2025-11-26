@@ -276,16 +276,13 @@ def create_web_app():
     
     @app.get("/api/models")
     async def get_models():
+        """Retourne la liste des modèles LLM disponibles directement depuis Ollama."""
         try:
-            status = model_manager.get_model_status()
-            installed_models = [
-                model_id for model_id, model_info in status['models'].items() 
-                if model_info.get('installed', False)
-            ]
+            installed_models = model_manager.get_installed_models()
             return {
                 "success": True,
                 "models": installed_models,
-                "current_model": status.get('current_model')
+                "current_model": model_manager.get_current_model()
             }
         except Exception as e:
             return {"success": False, "error": str(e)}

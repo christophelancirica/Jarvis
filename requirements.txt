@@ -31,12 +31,12 @@ pygame>=2.5.2     # Pour lecture audio Edge-TTS
 # Voice Cloning - VERSIONS CRITIQUES
 # ============================================================
 # PyTorch - VERSION FIXE pour éviter warnings weights_only
-torch==2.1.0
-torchaudio==2.1.0
+torch==2.3.1
+torchaudio==2.3.1
 torchcodec==0.8
 
 # Coqui TTS pour clonage vocal
-TTS>=0.22.0
+coqui-tts>=0.25.0
 
 # ============================================================
 # Audio Processing
@@ -44,9 +44,9 @@ TTS>=0.22.0
 pyaudio>=0.2.13
 sounddevice>=0.4.6
 soundfile>=0.12.1
-scipy>=1.10.0,<1.14.0
+scipy==1.13.1
 librosa==0.11.0
-numphy==1.22.3
+numpy==1.26.4
 numba>=0.57.0
 
 # ============================================================
@@ -66,6 +66,8 @@ keyboard>=0.13.5
 psutil>=5.9.6
 Pillow>=10.0.0
 num2words
+gTTS>=2.5.1
+pyttsx3>=2.90
 
 # ============================================================
 # Dépendances additionnelles TTS

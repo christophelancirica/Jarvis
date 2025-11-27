@@ -492,6 +492,19 @@ class ConversationFlow:
         except Exception as e:
             log.error(f"Erreur rechargement TTS: {e}")
             raise
+
+    async def reload_llm(self, model_name: str):
+        """Change le modèle du client LLM existant."""
+        try:
+            if self.llm:
+                log.info(f"Changement du modèle LLM vers : {model_name}")
+                self.llm.change_model(model_name)
+                log.success(f"Modèle LLM changé vers : {model_name}")
+            else:
+                log.warning("Le client LLM n'est pas initialisé, impossible de changer de modèle.")
+        except Exception as e:
+            log.error(f"Erreur lors du changement de modèle LLM : {e}")
+            raise
     
     def get_personality(self) -> str:
         """Retourne la personnalité actuelle"""

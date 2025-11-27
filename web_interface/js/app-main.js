@@ -64,9 +64,6 @@ async function initializeConfig() {
             // Stocker la config dans une variable globale pour accÃ¨s rapide
             window.jarvisConfig = data;
             
-            // Appliquer immÃ©diatement les paramÃ¨tres d'interface
-            await applyInterfaceConfigFromServer(data.interface || {});
-            
             addLogEntry('📄 Configuration unifiée chargée depuis le serveur', 'success');
             return true;
         } else {
@@ -169,6 +166,11 @@ async function initializeModules() {
     try {
         addLogEntry('🔧 Initialisation des modules...', 'info');
         
+        // Charger la configuration des thèmes en premier
+        if (typeof loadThemesConfig === 'function') {
+            await loadThemesConfig();
+        }
+
         // ✅ Initialisation du gestionnaire de voix
         if (typeof initVoices === 'function') {
             await initVoices();
@@ -180,6 +182,7 @@ async function initializeModules() {
         await loadRolesFromAPI();
         await loadBackgroundsFromAPI();
         await loadModelsFromAPI();
+        await loadAudioDevicesFromAPI();
         
         // ✅ Visibilité des panneaux
         updateVoiceVisibility();
@@ -348,11 +351,61 @@ async function loadBackgroundsFromAPI() {
 }
 
 /**
+ * Charge la liste des périphériques audio depuis l'API et peuple le sélecteur.
+ */
+async function loadAudioDevicesFromAPI() {
+    try {
+        const response = await fetch('/api/audio/devices');
+        const data = await response.json();
+
+        const deviceSelect = document.getElementById('audio-device');
+        if (deviceSelect && data.success && data.devices) {
+            deviceSelect.innerHTML = ''; // Vide les options existantes
+
+            if (data.devices.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "Aucun microphone trouvé";
+                option.disabled = true;
+                deviceSelect.appendChild(option);
+            } else {
+                data.devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.index;
+                    option.textContent = device.name;
+                    deviceSelect.appendChild(option);
+                });
+            }
+
+            // Pré-sélectionner le périphérique sauvegardé si disponible
+            if (window.jarvisConfig?.audio?.input?.device_index) {
+                deviceSelect.value = window.jarvisConfig.audio.input.device_index;
+            }
+
+            addLogEntry(`🎤 ${data.devices.length} microphones chargés`, 'info');
+        } else if (!data.success) {
+            throw new Error(data.error || 'Réponse invalide du serveur');
+        }
+    } catch (error) {
+        addLogEntry(`❌ Erreur chargement des périphériques audio : ${error.message}`, 'error');
+        const deviceSelect = document.getElementById('audio-device');
+        if (deviceSelect) {
+            deviceSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    }
+}
+
+/**
  * 🚀 MODIFIÉ: Mise à jour de l'interface avec config unifiée
  */
 async function updateUI() {
     try {
         addLogEntry('🎨 Mise à jour interface unifiée...', 'info');
+
+        // Appliquer la configuration de l'interface maintenant que les thèmes sont chargés
+        if (window.jarvisConfig?.interface) {
+            await applyInterfaceConfigFromServer(window.jarvisConfig.interface);
+        }
         
         // Mettre à jour les informations de configuration affichées
         if (window.jarvisConfig) {

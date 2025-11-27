@@ -459,6 +459,15 @@ async function saveSettingsFromModal() {
             
             if (success) {
                 addLogEntry(`✅ Paramètres sauvegardés (${Object.keys(allChangesToSave).length} changements)`, 'success');
+                // Mettre à jour le nom de l'assistant si la personnalité a changé
+                if (allChangesToSave.personality) {
+                    const voiceSelect = document.getElementById('voice-personality');
+                    const newName = voiceSelect.options[voiceSelect.selectedIndex].text;
+                    const assistantNameElement = document.getElementById('assistant-name');
+                    if (assistantNameElement) {
+                        assistantNameElement.textContent = `Assistant virtuel - ${newName}`;
+                    }
+                }
             } else {
                 throw new Error('Timeout ou erreur serveur');
             }

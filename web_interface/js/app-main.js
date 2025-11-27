@@ -218,41 +218,51 @@ async function loadVoicesFromAPI() {
 async function populateVoiceSelectFromAPI(standardVoices, clonedVoices) {
     const voiceSelect = document.getElementById('voice-personality');
     if (!voiceSelect) return;
-    
+
     voiceSelect.innerHTML = '';
     
-    // Voix standard
-    if (standardVoices && Object.keys(standardVoices).length > 0) {
-        const standardGroup = document.createElement('optgroup');
-        standardGroup.label = '🎤 Voix standard';
-        
+    const categories = {
+        'edge-tts': { label: 'Edge-TTS', element: document.createElement('optgroup'), voices: [] },
+        'coqui-tts': { label: 'Coqui/Local', element: document.createElement('optgroup'), voices: [] },
+        'cloned': { label: '🎭 Voix clonées', element: document.createElement('optgroup'), voices: [] }
+    };
+
+    // Catégoriser les voix standard
+    if (standardVoices) {
         Object.entries(standardVoices).forEach(([id, voice]) => {
-            const option = document.createElement('option');
-            option.value = id;
-            option.textContent = voice.display_name || voice.name;
-            standardGroup.appendChild(option);
+            const model = voice.model || 'coqui-tts'; // Fallback pour les anciens formats
+            if (model.includes('edge')) {
+                categories['edge-tts'].voices.push({ id, voice });
+            } else {
+                categories['coqui-tts'].voices.push({ id, voice });
+            }
         });
-        
-        voiceSelect.appendChild(standardGroup);
     }
-    
-    // Voix clonées
-    if (clonedVoices && Object.keys(clonedVoices).length > 0) {
-        const clonedGroup = document.createElement('optgroup');
-        clonedGroup.label = '🎭 Voix clonées';
-        
+
+    // Ajouter les voix clonées
+    if (clonedVoices) {
         Object.entries(clonedVoices).forEach(([id, voice]) => {
             if (voice.processing_status === 'ready') {
+                categories['cloned'].voices.push({ id, voice });
+            }
+        });
+    }
+
+    // Construire les optgroups
+    for (const key in categories) {
+        const category = categories[key];
+        if (category.voices.length > 0) {
+            category.element.label = category.label;
+            category.voices.forEach(({ id, voice }) => {
                 const option = document.createElement('option');
                 option.value = id;
                 option.textContent = voice.display_name || voice.name;
-                clonedGroup.appendChild(option);
-            }
-        });
-        
-        voiceSelect.appendChild(clonedGroup);
+                category.element.appendChild(option);
+            });
+            voiceSelect.appendChild(category.element);
+        }
     }
-    
+
     // Sélectionner la voix actuelle depuis la config
     if (window.jarvisConfig?.voice?.personality) {
         voiceSelect.value = window.jarvisConfig.voice.personality;

@@ -97,6 +97,20 @@ class ConfigCoordinator:
         if 'background_opacity' in config:
             validated['interface'] = validated.get('interface', {})
             validated['interface']['background_opacity'] = int(config['background_opacity'])
+
+        if 'audio_device' in config:
+            validated['audio'] = validated.get('audio', {})
+            validated['audio']['input'] = validated['audio'].get('input', {})
+            validated['audio']['input']['device_index'] = int(config['audio_device'])
+
+        if 'audio_sensitivity' in config:
+            validated['audio'] = validated.get('audio', {})
+            validated['audio']['input'] = validated['audio'].get('input', {})
+            # Le VAD aggressiveness est généralement un entier de 0 à 3.
+            # On mappe la sensibilité (1-10) à cette échelle.
+            sensitivity = int(config['audio_sensitivity'])
+            vad_level = 3 if sensitivity > 7 else 2 if sensitivity > 4 else 1 if sensitivity > 1 else 0
+            validated['audio']['input']['vad_aggressiveness'] = vad_level
         
         return validated
     

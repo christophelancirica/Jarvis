@@ -66,6 +66,8 @@ keyboard>=0.13.5
 psutil>=5.9.6
 Pillow>=10.0.0
 num2words
+gTTS>=2.5.1
+pyttsx3>=2.90
 
 # ============================================================
 # Dépendances additionnelles TTS

@@ -66,6 +66,90 @@
       "personality": "Josephine",
       "type": "standard",
       "voice_id": "Josephine"
+    },
+    "Henri": {
+      "id": "Henri",
+      "name": "Henri",
+      "display_name": "Henri (Masculin)",
+      "gender": "male",
+      "model": "edge-tts",
+      "edge_voice": "fr-FR-HenriNeural",
+      "description": "Voix masculine française",
+      "voice_type": "adult_male",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "personality": "Henri",
+      "type": "standard",
+      "voice_id": "Henri"
+    },
+    "Remy": {
+      "id": "Remy",
+      "name": "Remy",
+      "display_name": "Remy (Masculin jeune)",
+      "gender": "male",
+      "model": "edge-tts",
+      "edge_voice": "fr-FR-RemyNeural",
+      "description": "Voix masculine jeune et dynamique",
+      "voice_type": "young_adult_male",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "personality": "Remy",
+      "type": "standard",
+      "voice_id": "Remy"
+    },
+    "Vivienne": {
+      "id": "Vivienne",
+      "name": "Vivienne",
+      "display_name": "Vivienne (Féminin jeune)",
+      "gender": "female",
+      "model": "edge-tts",
+      "edge_voice": "fr-FR-VivienneNeural",
+      "description": "Voix féminine jeune et claire",
+      "voice_type": "young_adult_female",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "personality": "Vivienne",
+      "type": "standard",
+      "voice_id": "Vivienne"
+    },
+    "Google": {
+      "id": "Google",
+      "name": "Google",
+      "display_name": "Google Translate (Féminin)",
+      "gender": "female",
+      "model": "gtts",
+      "lang": "fr",
+      "description": "Voix de Google Translate",
+      "voice_type": "adult_female",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "personality": "Google",
+      "type": "standard",
+      "voice_id": "Google"
+    },
+    "Robot": {
+      "id": "Robot",
+      "name": "Robot",
+      "display_name": "Robot Windows (Système)",
+      "gender": "unknown",
+      "model": "system",
+      "description": "Voix robotique du système d'exploitation",
+      "voice_type": "robot",
+      "personality_config": {
+        "voice_speed": 1.0,
+        "voice_volume": 90
+      },
+      "personality": "Robot",
+      "type": "standard",
+      "voice_id": "Robot"
     }
   },
   "default_voice": "Jarvis",

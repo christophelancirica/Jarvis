@@ -9,20 +9,23 @@ let themesConfig = null;
 /**
  * Charge la configuration des thèmes depuis themes.json
  */
-async function loadThemesConfig() {
-    try {
-        const response = await fetch('config/themes.json');
-        if (response.ok) {
-            themesConfig = await response.json();
+function loadThemesConfig() {
+    return fetch('config/themes.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            themesConfig = data;
             addLogEntry('✅ Configuration thèmes chargée', 'success');
             return true;
-        } else {
-            throw new Error(`HTTP ${response.status}`);
-        }
-    } catch (error) {
-        addLogEntry(`❌ Erreur chargement themes.json: ${error.message}`, 'error');
-        return false;
-    }
+        })
+        .catch(error => {
+            addLogEntry(`❌ Erreur chargement themes.json: ${error.message}`, 'error');
+            return false;
+        });
 }
 
 /**

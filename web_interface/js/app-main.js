@@ -64,9 +64,6 @@ async function initializeConfig() {
             // Stocker la config dans une variable globale pour accÃ¨s rapide
             window.jarvisConfig = data;
             
-            // Appliquer immÃ©diatement les paramÃ¨tres d'interface
-            await applyInterfaceConfigFromServer(data.interface || {});
-            
             addLogEntry('📄 Configuration unifiée chargée depuis le serveur', 'success');
             return true;
         } else {
@@ -169,6 +166,11 @@ async function initializeModules() {
     try {
         addLogEntry('🔧 Initialisation des modules...', 'info');
         
+        // Charger la configuration des thèmes en premier
+        if (typeof loadThemesConfig === 'function') {
+            await loadThemesConfig();
+        }
+
         // ✅ Initialisation du gestionnaire de voix
         if (typeof initVoices === 'function') {
             await initVoices();
@@ -399,6 +401,11 @@ async function loadAudioDevicesFromAPI() {
 async function updateUI() {
     try {
         addLogEntry('🎨 Mise à jour interface unifiée...', 'info');
+
+        // Appliquer la configuration de l'interface maintenant que les thèmes sont chargés
+        if (window.jarvisConfig?.interface) {
+            await applyInterfaceConfigFromServer(window.jarvisConfig.interface);
+        }
         
         // Mettre à jour les informations de configuration affichées
         if (window.jarvisConfig) {

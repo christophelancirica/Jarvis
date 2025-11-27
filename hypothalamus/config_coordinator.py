@@ -112,8 +112,8 @@ class ConfigCoordinator:
             
             if personality:
                 # Charger la nouvelle voix
-                result = await self.conversation_flow.change_voice(personality)
-                log.success(f"🔊 Voix appliquée: {result}")
+                result = await self.conversation_flow.reload_tts(None, personality)
+                log.success(f"🔊 Voix appliquée: {personality}")
                 
         except Exception as e:
             log.error(f"❌ Erreur application voix: {e}")

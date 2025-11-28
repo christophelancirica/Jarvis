@@ -24,6 +24,7 @@ except ImportError:
 from .audio_generator import AudioGenerator
 from .audio_pipeline import AudioPipeline, split_text_for_streaming
 from .voice_cloner import VoiceCloner
+from hypothalamus.config_manager import ConfigManager
 
 
 class TextToSpeech:
@@ -76,35 +77,46 @@ class TextToSpeech:
         Résout la configuration voix depuis les paramètres
         Priorité: VoiceCloner > Paramètres legacy > Défaut
         """
+        config_manager = ConfigManager()
+        global_config = config_manager.get_config()
+        audio_output_config = global_config.get('audio', {}).get('output', {})
+
+        base_config = None
         
         # PRIORITÉ 1: Chercher dans VoiceCloner (voix configurées)
-        voice_config = self.voice_cloner.get_voice_config(personality)
-        if voice_config:
+        base_config = self.voice_cloner.get_voice_config(personality)
+        if base_config:
             log.debug(f"Configuration trouvée dans VoiceCloner pour '{personality}'")
-            return voice_config
         
         # PRIORITÉ 2: Construire depuis paramètres legacy
-        if model_name:
+        elif model_name:
             log.debug(f"Construction config depuis paramètres legacy: {model_name}")
-            return self._build_legacy_voice_config(model_name, personality, edge_voice, sample_path)
+            base_config = self._build_legacy_voice_config(model_name, personality, edge_voice, sample_path)
         
         # PRIORITÉ 3: Essayer voix par défaut
-        default_voice = self.voice_cloner.voices_config.get('default_voice', 'jarvis')
-        default_config = self.voice_cloner.get_voice_config(default_voice)
-        if default_config:
-            log.warning(f"Utilisation voix par défaut '{default_voice}' au lieu de '{personality}'")
-            return default_config
-        
-        # PRIORITÉ 4: Fallback Edge-TTS
-        log.warning(f"Fallback Edge-TTS pour '{personality}'")
-        return {
-            'model': 'edge-tts',
-            'edge_voice': 'fr-FR-DeniseNeural',
-            'personality_config': {
-                'voice_speed': 1.0,
-                'voice_volume': 90
+        else:
+            default_voice = self.voice_cloner.voices_config.get('default_voice', 'jarvis')
+            base_config = self.voice_cloner.get_voice_config(default_voice)
+            if base_config:
+                log.warning(f"Utilisation voix par défaut '{default_voice}' au lieu de '{personality}'")
+
+        if not base_config:
+            # PRIORITÉ 4: Fallback Edge-TTS
+            log.warning(f"Fallback Edge-TTS pour '{personality}'")
+            base_config = {
+                'model': 'edge-tts',
+                'edge_voice': 'fr-FR-DeniseNeural',
+                'personality_config': {}
             }
-        }
+
+        # Fusionner avec la configuration globale pour la vitesse et le volume
+        if 'personality_config' not in base_config:
+            base_config['personality_config'] = {}
+
+        base_config['personality_config']['voice_speed'] = audio_output_config.get('speed', 1.0)
+        base_config['personality_config']['voice_volume'] = audio_output_config.get('volume', 90) / 100.0
+
+        return base_config
     
     def _build_legacy_voice_config(self, model_name, personality, edge_voice, sample_path):
         """Construit voice_config depuis paramètres legacy"""
@@ -113,10 +125,6 @@ class TextToSpeech:
             return {
                 'model': 'edge-tts',
                 'edge_voice': edge_voice or "fr-FR-DeniseNeural",
-                'personality_config': {
-                    'voice_speed': 1.0,
-                    'voice_volume': 90
-                }
             }
         
         elif model_name == "xtts-v2":
@@ -127,18 +135,12 @@ class TextToSpeech:
             return {
                 'model': 'xtts-v2',
                 'sample_path': sample_path,
-                'personality_config': {
-                    'voice_speed': 1.0
-                }
             }
         
         else:
             # Coqui
             return {
                 'model': model_name,
-                'personality_config': {
-                    'voice_speed': 1.0
-                }
             }
     
     # ========================================================================

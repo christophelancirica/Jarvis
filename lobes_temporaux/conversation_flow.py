@@ -351,13 +351,15 @@ class ConversationFlow:
                     sentence_to_process = sentence_buffer.strip()
                     
                     if sentence_to_process:
-                        # Mesurer temps premier audio
-                        if first_audio_time is None:
-                            first_audio_time = time.time() - session_start
-                        
-                        # Envoi au TTS (nouvelle architecture compatible)
-                        await self._send_to_tts(sentence_to_process)
-                        log.debug(f"✅ Chunk envoyé: {sentence_to_process[:40]}...", "🔊")
+                        clean_sentence = self._clean_text_for_tts(sentence_to_process)
+                        if clean_sentence:
+                            # Mesurer temps premier audio
+                            if first_audio_time is None:
+                                first_audio_time = time.time() - session_start
+
+                            # Envoi au TTS (nouvelle architecture compatible)
+                            await self._send_to_tts(clean_sentence)
+                            log.debug(f"✅ Chunk envoyé: {clean_sentence[:40]}...", "🔊")
                     
                     sentence_buffer = ""  # Reset buffer
                 
@@ -367,8 +369,10 @@ class ConversationFlow:
             
             # Traiter le reste du buffer s'il y a du contenu
             if sentence_buffer.strip():
-                await self._send_to_tts(sentence_buffer.strip())
-                log.debug("✅ Dernier chunk envoyé", "🔊")
+                clean_last_chunk = self._clean_text_for_tts(sentence_buffer.strip())
+                if clean_last_chunk:
+                    await self._send_to_tts(clean_last_chunk)
+                    log.debug("✅ Dernier chunk envoyé", "🔊")
             
             # Finaliser le pipeline si actif avec timeout dynamique
             if self._supports_pipeline():
@@ -465,6 +469,25 @@ class ConversationFlow:
             return True
         
         return False
+
+    def _clean_text_for_tts(self, text: str) -> str:
+        """Nettoie le texte avant de l'envoyer au TTS."""
+        import re
+        import emoji
+
+        # Ne pas supprimer les balises <think>
+        # text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+
+        # Étape 1: Convertir tous les emojis en leur description textuelle (ex: 😊 -> :visage_souriant:)
+        text_demojized = emoji.demojize(text)
+
+        # Étape 2: Supprimer toutes les descriptions d'émojis (ex: :visage_souriant:)
+        text_no_emojis = re.sub(r':\w+:', '', text_demojized)
+
+        # Supprime les astérisques d'action (ex: *sourit*)
+        text_cleaned = re.sub(r'\*.*?\*', '', text_no_emojis)
+
+        return text_cleaned.strip()
     
     async def reload_tts(self, model_name, personality, edge_voice=None, sample_path=None, embedding_path=None):
         """Recharge le TTS avec une nouvelle voix"""

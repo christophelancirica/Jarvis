@@ -23,8 +23,18 @@ class JarvisLLM:
         self.personality = personality
         self.conversation_history = []
         self._initialize_system_prompt()
+        self._warmup_model()
         
         log.success(f"LLM prêt ({self.model}) - Mode: {personality}", "🧠")
+
+    def _warmup_model(self):
+        """Envoie une requête silencieuse pour charger le modèle en mémoire."""
+        try:
+            log.info(f"🔥 Préchauffage du modèle LLM: {self.model}...")
+            ollama.generate(model=self.model, prompt=".", options={"num_predict": 1}, keep_alive=0)
+            log.success(f"✅ Modèle {self.model} préchauffé.")
+        except Exception as e:
+            log.error(f"❌ Échec du préchauffage du modèle {self.model}: {e}")
 
     def _initialize_system_prompt(self):
         if self.personality == "Jarvis":
@@ -120,10 +130,11 @@ class JarvisLLM:
         return self.generate_response(user_input)
 
     def change_model(self, new_model: str):
-        """Change le modèle LLM à la volée et réinitialise l'historique."""
+        """Change le modèle LLM à la volée, réinitialise l'historique et préchauffe le nouveau modèle."""
         old_model = self.model
         self.model = new_model
         self.clear_history()
+        self._warmup_model()
         log.info(f"🔄 Modèle changé: {old_model} → {new_model}. L'historique de la conversation a été réinitialisé.")
         return True
 

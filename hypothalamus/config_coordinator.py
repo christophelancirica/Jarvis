@@ -33,6 +33,8 @@ class ConfigCoordinator:
                 await self._apply_voice_changes(validated_config)
             if 'llm' in validated_config and 'model' in validated_config['llm']:
                 await self._apply_llm_changes(validated_config)
+            if 'audio' in validated_config and 'output' in validated_config['audio']:
+                await self._apply_audio_settings_changes(validated_config)
 
             # 3. 🚀 SAUVEGARDE UNIFIÉE - Une seule ligne !
             success = config.update_config(validated_config)
@@ -148,6 +150,24 @@ class ConfigCoordinator:
 
         except Exception as e:
             log.error(f"❌ Erreur application modèle LLM : {e}")
+
+    async def _apply_audio_settings_changes(self, config: Dict[str, Any]):
+        """Application des changements de paramètres audio."""
+        try:
+            if not self.conversation_flow:
+                log.warning("ConversationFlow non disponible pour la mise à jour des paramètres audio.")
+                return
+
+            audio_config = config.get('audio', {}).get('output', {})
+            speed = audio_config.get('speed')
+            volume = audio_config.get('volume')
+
+            if speed is not None or volume is not None:
+                await self.conversation_flow.update_audio_settings(speed=speed, volume=volume)
+                log.success(f"🔊 Paramètres audio appliqués : vitesse={speed}, volume={volume}")
+
+        except Exception as e:
+            log.error(f"❌ Erreur application paramètres audio : {e}")
     
     def get_current_config(self) -> Dict[str, Any]:
         """Retourne la configuration actuelle"""

@@ -112,6 +112,19 @@ function addLogEntry(message, type = 'info') {
 function cleanupLogs() {
     const container = document.getElementById('log-container');
     if (!container) return;
+
+    const maxLogs = 100; // Garde les 100 logs les plus récents
+    while (container.children.length > maxLogs) {
+        container.removeChild(container.firstChild);
+    }
+}
+
+/**
+ * Met à jour l'affichage de configuration dans le debug
+ */
+function cleanupLogs() {
+    const container = document.getElementById('log-container');
+    if (!container) return;
     
     const maxLogs = 100; // Garde les 100 logs les plus récents
     while (container.children.length > maxLogs) {

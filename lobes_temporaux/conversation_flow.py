@@ -533,15 +533,6 @@ class ConversationFlow:
         except Exception as e:
             log.error(f"Erreur lors du changement de modèle LLM : {e}")
             raise
-
-    async def update_audio_settings(self, speed: float = None, volume: int = None):
-        """Met à jour les paramètres audio du TTS."""
-        try:
-            if self.tts:
-                self.tts.update_voice_settings(speed=speed, volume=volume)
-                log.success(f"Paramètres audio mis à jour : vitesse={speed}, volume={volume}")
-        except Exception as e:
-            log.error(f"Erreur lors de la mise à jour des paramètres audio : {e}")
     
     def get_personality(self) -> str:
         """Retourne la personnalité actuelle"""

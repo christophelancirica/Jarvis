@@ -118,73 +118,22 @@
       "type": "standard",
       "voice_id": "Vivienne"
     },
-    "GoogleFR": {
-      "id": "GoogleFR",
-      "name": "GoogleFR",
-      "display_name": "Google Translate (Français)",
+    "Google": {
+      "id": "Google",
+      "name": "Google",
+      "display_name": "Google Translate (Féminin)",
       "gender": "female",
       "model": "gtts",
       "lang": "fr",
-      "description": "Voix de Google Translate en français",
+      "description": "Voix de Google Translate",
       "voice_type": "adult_female",
       "personality_config": {
         "voice_speed": 1.0,
         "voice_volume": 90
       },
-      "personality": "GoogleFR",
+      "personality": "Google",
       "type": "standard",
-      "voice_id": "GoogleFR"
-    },
-    "GoogleEN": {
-      "id": "GoogleEN",
-      "name": "GoogleEN",
-      "display_name": "Google Translate (English)",
-      "gender": "female",
-      "model": "gtts",
-      "lang": "en",
-      "description": "Voix de Google Translate en anglais",
-      "voice_type": "adult_female",
-      "personality_config": {
-        "voice_speed": 1.0,
-        "voice_volume": 90
-      },
-      "personality": "GoogleEN",
-      "type": "standard",
-      "voice_id": "GoogleEN"
-    },
-    "GoogleES": {
-      "id": "GoogleES",
-      "name": "GoogleES",
-      "display_name": "Google Translate (Español)",
-      "gender": "female",
-      "model": "gtts",
-      "lang": "es",
-      "description": "Voix de Google Translate en espagnol",
-      "voice_type": "adult_female",
-      "personality_config": {
-        "voice_speed": 1.0,
-        "voice_volume": 90
-      },
-      "personality": "GoogleES",
-      "type": "standard",
-      "voice_id": "GoogleES"
-    },
-    "GoogleCA": {
-        "id": "GoogleCA",
-        "name": "GoogleCA",
-        "display_name": "Google Translate (Français Canadien)",
-        "gender": "female",
-        "model": "gtts",
-        "lang": "fr-CA",
-        "description": "Voix de Google Translate avec un accent canadien",
-        "voice_type": "adult_female",
-        "personality_config": {
-            "voice_speed": 1.0,
-            "voice_volume": 90
-        },
-        "personality": "GoogleCA",
-        "type": "standard",
-        "voice_id": "GoogleCA"
+      "voice_id": "Google"
     },
     "Robot": {
       "id": "Robot",

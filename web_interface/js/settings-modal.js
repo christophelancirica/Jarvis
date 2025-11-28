@@ -349,29 +349,33 @@ async function saveSettingsFromModal() {
         // Flush final des previews en attente
         flushBatchedChanges();
         
-        // ✅ Récupérer les nouvelles valeurs de la modal
+        const changes = {};
+        
+        // Helper pour ajouter un changement si la valeur est différente
+        const addChange = (key, newValue, currentValue) => {
+            if (newValue !== currentValue) {
+                changes[key] = newValue;
+            }
+        };
+
         const currentSettings = await getCurrentServerConfig();
-        const newSettings = JSON.parse(JSON.stringify(currentSettings));
+
+        // Voix
+        addChange('personality', document.getElementById('voice-personality')?.value, currentSettings.voice?.personality);
+        addChange('voice_speed', parseFloat(document.getElementById('voice-speed')?.value || 1.0), currentSettings.audio?.output?.speed);
+        addChange('voice_volume', parseInt(document.getElementById('voice-volume')?.value || 90), currentSettings.audio?.output?.volume);
         
-        // Configuration VOIX (voice)
-        newSettings.voice.personality = document.getElementById('voice-personality')?.value;
-        // La vitesse et le volume sont dans audio.output
-        newSettings.audio.output.speed = parseFloat(document.getElementById('voice-speed')?.value || 1.0);
-        newSettings.audio.output.volume = parseInt(document.getElementById('voice-volume')?.value || 90);
-        
-        // Configuration LLM
-        newSettings.llm.model = document.getElementById('llm-model')?.value;
-        newSettings.llm.temperature = parseFloat(document.getElementById('llm-temperature')?.value || 0.7);
-        
-        // Configuration INTERFACE (interface)
-        newSettings.interface.theme = document.getElementById('interface-theme')?.value;
-        newSettings.interface.background = document.getElementById('interface-background')?.value;
-        newSettings.interface.background_opacity = parseInt(document.getElementById('background-opacity')?.value || 30);
-        
-        // Configuration AUDIO INPUT (audio.input)
-        newSettings.audio.input.sensitivity = parseInt(document.getElementById('audio-sensitivity')?.value || 5);
-        
-        const changes = getChangedSettings(currentSettings, newSettings);
+        // LLM
+        addChange('llm_model', document.getElementById('llm-model')?.value, currentSettings.llm?.model);
+        addChange('llm_temperature', parseFloat(document.getElementById('llm-temperature')?.value || 0.7), currentSettings.llm?.temperature);
+
+        // Interface
+        addChange('theme', document.getElementById('interface-theme')?.value, currentSettings.interface?.theme);
+        addChange('background', document.getElementById('interface-background')?.value, currentSettings.interface?.background);
+        addChange('background_opacity', parseInt(document.getElementById('background-opacity')?.value || 30), currentSettings.interface?.background_opacity);
+
+        // Audio
+        addChange('audio_device', document.getElementById('audio-device')?.value, currentSettings.audio?.input?.device_index);
         console.log('🔍 [DEBUG] Changements détectés:', changes);
         
         if (Object.keys(changes).length === 0) {
@@ -455,6 +459,15 @@ async function saveSettingsFromModal() {
             
             if (success) {
                 addLogEntry(`✅ Paramètres sauvegardés (${Object.keys(allChangesToSave).length} changements)`, 'success');
+                // Mettre à jour le nom de l'assistant si la personnalité a changé
+                if (allChangesToSave.personality) {
+                    const voiceSelect = document.getElementById('voice-personality');
+                    const newName = voiceSelect.options[voiceSelect.selectedIndex].text;
+                    const assistantNameElement = document.getElementById('assistant-name');
+                    if (assistantNameElement) {
+                        assistantNameElement.textContent = `Assistant virtuel - ${newName}`;
+                    }
+                }
             } else {
                 throw new Error('Timeout ou erreur serveur');
             }
@@ -624,24 +637,68 @@ function getChangedSettings(current, newSettings) {
     return changes;
 }
 
-/**
- * Récupère la config actuelle du serveur
- */
-async function getCurrentServerConfig() {
-    try {
-        const response = await fetch('/api/config');
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Erreur récupération config serveur:', error);
-        return {};
-    }
-}
-
 // 🚀 Nettoyage automatique lors du déchargement de page
 window.addEventListener('beforeunload', function() {
     flushBatchedChanges();
 });
+
+/**
+ * Teste la voix actuellement sélectionnée dans les paramètres
+ */
+async function testVoice() {
+    const voiceSelect = document.getElementById('voice-personality');
+    const testButton = document.querySelector('button[onclick="testVoice()"]');
+    if (!voiceSelect || !testButton) {
+        showToast('Erreur: Composants introuvables.', 'error');
+        return;
+    }
+
+    const voiceId = voiceSelect.value;
+    if (!voiceId) {
+        showToast('Veuillez sélectionner une voix.', 'warning');
+        return;
+    }
+
+    // Gérer l'état du bouton
+    const originalButtonText = testButton.innerHTML;
+    testButton.innerHTML = '🔊 Test en cours...';
+    testButton.disabled = true;
+
+    try {
+        showToast(`🔊 Test de la voix : ${voiceSelect.options[voiceSelect.selectedIndex].text}...`, 'info');
+
+        const response = await fetch('/api/voice/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                voice_id: voiceId,
+                text: "Bonjour, ceci est un test de la voix sélectionnée."
+            })
+        });
+
+        if (response.ok) {
+            addLogEntry(`🔊 Test de la voix '${voiceId}' envoyé.`, 'info');
+        } else {
+            const error = await response.json();
+            const errorMessage = error.message || 'Le test de la voix a échoué.';
+            showToast(`❌ Erreur : ${errorMessage}`, 'error');
+            addLogEntry(`❌ Erreur test voix : ${errorMessage}`, 'error');
+        }
+
+    } catch (error) {
+        const errorMessage = error.message || 'Une erreur inattendue est survenue.';
+        showToast(`❌ Erreur : ${errorMessage}`, 'error');
+        addLogEntry(`❌ Erreur test voix : ${errorMessage}`, 'error');
+    } finally {
+        // Restaurer l'état du bouton
+        if (testButton && originalButtonText) {
+            testButton.innerHTML = originalButtonText;
+            testButton.disabled = false;
+        }
+    }
+}
 
 // Initialiser les événements dès que le DOM est prêt
 document.addEventListener('DOMContentLoaded', initializeSettingsEvents);

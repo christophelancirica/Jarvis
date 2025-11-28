@@ -64,9 +64,6 @@ async function initializeConfig() {
             // Stocker la config dans une variable globale pour accÃ¨s rapide
             window.jarvisConfig = data;
             
-            // Appliquer immÃ©diatement les paramÃ¨tres d'interface
-            await applyInterfaceConfigFromServer(data.interface || {});
-            
             addLogEntry('📄 Configuration unifiée chargée depuis le serveur', 'success');
             return true;
         } else {
@@ -169,6 +166,11 @@ async function initializeModules() {
     try {
         addLogEntry('🔧 Initialisation des modules...', 'info');
         
+        // Charger la configuration des thèmes en premier
+        if (typeof loadThemesConfig === 'function') {
+            await loadThemesConfig();
+        }
+
         // ✅ Initialisation du gestionnaire de voix
         if (typeof initVoices === 'function') {
             await initVoices();
@@ -180,6 +182,7 @@ async function initializeModules() {
         await loadRolesFromAPI();
         await loadBackgroundsFromAPI();
         await loadModelsFromAPI();
+        await loadAudioDevicesFromAPI();
         
         // ✅ Visibilité des panneaux
         updateVoiceVisibility();
@@ -215,41 +218,59 @@ async function loadVoicesFromAPI() {
 async function populateVoiceSelectFromAPI(standardVoices, clonedVoices) {
     const voiceSelect = document.getElementById('voice-personality');
     if (!voiceSelect) return;
-    
+
     voiceSelect.innerHTML = '';
     
-    // Voix standard
-    if (standardVoices && Object.keys(standardVoices).length > 0) {
-        const standardGroup = document.createElement('optgroup');
-        standardGroup.label = '🎤 Voix standard';
-        
+    const categories = {
+        'edge-tts': { label: 'Edge-TTS', element: document.createElement('optgroup'), voices: [] },
+        'coqui-tts': { label: 'Coqui/Local', element: document.createElement('optgroup'), voices: [] },
+        'cloned': { label: '🎭 Voix clonées', element: document.createElement('optgroup'), voices: [] }
+    };
+
+    // Catégoriser les voix standard
+    if (standardVoices) {
         Object.entries(standardVoices).forEach(([id, voice]) => {
-            const option = document.createElement('option');
-            option.value = id;
-            option.textContent = voice.display_name || voice.name;
-            standardGroup.appendChild(option);
-        });
-        
-        voiceSelect.appendChild(standardGroup);
-    }
-    
-    // Voix clonées
-    if (clonedVoices && Object.keys(clonedVoices).length > 0) {
-        const clonedGroup = document.createElement('optgroup');
-        clonedGroup.label = '🎭 Voix clonées';
-        
-        Object.entries(clonedVoices).forEach(([id, voice]) => {
-            if (voice.processing_status === 'ready') {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = voice.display_name || voice.name;
-                clonedGroup.appendChild(option);
+            const model = voice.model || 'coqui-tts'; // Fallback pour les anciens formats
+            if (model.includes('edge')) {
+                categories['edge-tts'].voices.push({ id, voice });
+            } else {
+                categories['coqui-tts'].voices.push({ id, voice });
             }
         });
-        
-        voiceSelect.appendChild(clonedGroup);
     }
-    
+
+    // Ajouter les voix clonées
+    if (clonedVoices) {
+        Object.entries(clonedVoices).forEach(([id, voice]) => {
+            if (voice.processing_status === 'ready') {
+                categories['cloned'].voices.push({ id, voice });
+            }
+        });
+    }
+
+    // Construire les optgroups
+    for (const key in categories) {
+        const category = categories[key];
+        if (category.voices.length > 0) {
+            category.element.label = category.label;
+            category.voices.forEach(({ id, voice }) => {
+                const option = document.createElement('option');
+                option.value = id;
+                let indicators = '';
+                if (voice.model === 'edge-tts' || voice.model === 'piper') {
+                    indicators = ' 🟢⚡'; // Streaming | Vitesse native
+                } else if (voice.model === 'gtts') {
+                    indicators = ' 🟠🐌'; // Différé | Vitesse simulée
+                } else if (voice.model === 'xtts-v2') {
+                    indicators = ' 🟠💎'; // Différé | Haute Qualité
+                }
+                option.textContent = (voice.display_name || voice.name) + indicators;
+                category.element.appendChild(option);
+            });
+            voiceSelect.appendChild(category.element);
+        }
+    }
+
     // Sélectionner la voix actuelle depuis la config
     if (window.jarvisConfig?.voice?.personality) {
         voiceSelect.value = window.jarvisConfig.voice.personality;
@@ -348,11 +369,67 @@ async function loadBackgroundsFromAPI() {
 }
 
 /**
+ * Charge la liste des périphériques audio depuis l'API et peuple le sélecteur.
+ */
+async function loadAudioDevicesFromAPI() {
+    try {
+        const response = await fetch('/api/audio/devices');
+        const data = await response.json();
+
+        const deviceSelect = document.getElementById('audio-device');
+        if (deviceSelect && data.success && data.devices) {
+            deviceSelect.innerHTML = ''; // Vide les options existantes
+
+            if (data.devices.length === 0) {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "Aucun microphone trouvé";
+                option.disabled = true;
+                deviceSelect.appendChild(option);
+            } else {
+                data.devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.index;
+                    option.textContent = device.name;
+                    deviceSelect.appendChild(option);
+                });
+            }
+
+            // Pré-sélectionner le périphérique sauvegardé si disponible
+            if (window.jarvisConfig?.audio?.input?.device_index) {
+                deviceSelect.value = window.jarvisConfig.audio.input.device_index;
+            }
+
+            addLogEntry(`🎤 ${data.devices.length} microphones chargés`, 'info');
+        } else if (!data.success) {
+            throw new Error(data.error || 'Réponse invalide du serveur');
+        }
+    } catch (error) {
+        addLogEntry(`❌ Erreur chargement des périphériques audio : ${error.message}`, 'error');
+        const deviceSelect = document.getElementById('audio-device');
+        if (deviceSelect) {
+            deviceSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+        }
+    }
+}
+
+/**
  * 🚀 MODIFIÉ: Mise à jour de l'interface avec config unifiée
  */
 async function updateUI() {
     try {
         addLogEntry('🎨 Mise à jour interface unifiée...', 'info');
+
+        // Initialiser l'état 'muet'
+        if (window.jarvisConfig?.audio?.output?.muted !== undefined) {
+            isMuted = window.jarvisConfig.audio.output.muted;
+        }
+        updateMuteButton();
+
+        // Appliquer la configuration de l'interface maintenant que les thèmes sont chargés
+        if (window.jarvisConfig?.interface) {
+            await applyInterfaceConfigFromServer(window.jarvisConfig.interface);
+        }
         
         // Mettre à jour les informations de configuration affichées
         if (window.jarvisConfig) {
@@ -545,6 +622,33 @@ async function main() {
 
 // Point d'entrée unique de l'application
 document.addEventListener('DOMContentLoaded', main);
+
+let isMuted = false;
+
+function toggleMute() {
+    isMuted = !isMuted;
+    updateMuteButton();
+    sendWebSocketMessage({
+        type: 'config_update',
+        config: { audio_output_muted: isMuted }
+    });
+    addLogEntry(`🔊 Audio ${isMuted ? 'désactivé' : 'activé'}`, 'info');
+}
+
+function updateMuteButton() {
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+        if (isMuted) {
+            muteBtn.innerHTML = '🔇';
+            muteBtn.title = 'Activer la voix';
+            muteBtn.classList.add('muted');
+        } else {
+            muteBtn.innerHTML = '🔊';
+            muteBtn.title = 'Désactiver la voix';
+            muteBtn.classList.remove('muted');
+        }
+    }
+}
 
 // Fallback si DOMContentLoaded a déjà été déclenché
 if (document.readyState === 'loading') {

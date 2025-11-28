@@ -23,6 +23,10 @@ except ImportError:
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(__name__)
 
+# Nouveaux imports pour gTTS et pyttsx3
+from gtts import gTTS
+import pyttsx3
+
 
 class AudioGenerator:
     """
@@ -69,12 +73,99 @@ class AudioGenerator:
                 return await self._generate_xtts(text, voice_config)
             elif model.startswith('tts_models/'):  # Coqui
                 return await self._generate_coqui(text, voice_config)
+            elif model == 'gtts':
+                return await self._generate_gtts(text, voice_config)
+            elif model == 'system':
+                return await self._generate_system(text, voice_config)
             else:
                 log.error(f"Modèle non supporté: {model}")
                 return None
                 
         except Exception as e:
             log.error(f"Erreur génération audio ({model}): {e}")
+            return None
+
+    async def _generate_gtts(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
+        """Génération Google Translate TTS (gTTS) avec post-traitement de la vitesse."""
+        try:
+            from pydub import AudioSegment
+            import io
+
+            lang = voice_config.get('lang', 'fr')
+            speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
+            log.debug(f"gTTS: lang={lang}, speed={speed}")
+
+            tts = gTTS(text=text, lang=lang, slow=False)
+
+            # Sauvegarder l'audio dans un buffer en mémoire
+            mp3_fp = io.BytesIO()
+            tts.write_to_fp(mp3_fp)
+            mp3_fp.seek(0)
+
+            # Post-traitement avec pydub si la vitesse n'est pas standard
+            if speed != 1.0:
+                log.debug(f"🐌 Application de la vitesse simulée: {speed}x")
+                audio = AudioSegment.from_file(mp3_fp, format="mp3")
+
+                # Modifier la vitesse
+                if speed > 1.0:
+                    audio = audio.speedup(playback_speed=speed)
+                else: # speed < 1.0
+                    # pydub ne gère pas le ralentissement directement, nous devons le simuler
+                    # Note : Ceci n'est pas une vraie modification de vitesse mais un hack
+                    # Pour un vrai ralentissement, il faudrait des librairies plus complexes (ex: sox)
+                    log.warning("Le ralentissement pour gTTS est expérimental.")
+                    # Cette approche n'est pas idéale, mais c'est le mieux qu'on puisse faire avec pydub
+                    # On va simplement exporter sans changement pour éviter les artefacts
+                    pass
+
+                # Exporter l'audio modifié dans un nouveau buffer
+                output_fp = io.BytesIO()
+                audio.export(output_fp, format="mp3")
+                output_fp.seek(0)
+                audio_data = output_fp.read()
+            else:
+                audio_data = mp3_fp.read()
+
+            log.debug(f"✅ gTTS généré: {len(audio_data)} bytes")
+            return audio_data
+
+        except Exception as e:
+            log.error(f"Erreur gTTS: {e}")
+            return None
+
+    async def _generate_system(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
+        """Génération TTS système (pyttsx3)"""
+        try:
+            engine = pyttsx3.init()
+
+            # Vitesse
+            rate = engine.getProperty('rate')
+            voice_speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
+            engine.setProperty('rate', int(rate * voice_speed))
+
+            # Volume
+            volume = voice_config.get('personality_config', {}).get('volume', 1.0)
+            engine.setProperty('volume', volume)
+
+            log.debug(f"System TTS: rate={int(rate * voice_speed)}, volume={volume}")
+
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+                tmp_path = tmp.name
+
+            engine.save_to_file(text, tmp_path)
+            engine.runAndWait()
+
+            with open(tmp_path, 'rb') as f:
+                audio_data = f.read()
+
+            os.unlink(tmp_path)
+
+            log.debug(f"✅ System TTS généré: {len(audio_data)} bytes")
+            return audio_data
+
+        except Exception as e:
+            log.error(f"Erreur System TTS: {e}")
             return None
     
     async def _generate_edge_tts(

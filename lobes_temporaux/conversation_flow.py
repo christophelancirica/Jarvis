@@ -19,6 +19,7 @@ from lobes_temporaux.stt import SpeechToText  # Module local
 from lobes_temporaux.tts import TextToSpeech  # Module local (maintenant avec NOUVELLE architecture)
 from hypothalamus.device_manager import DeviceManager
 from hypothalamus.voice_manager import VoiceManager
+from hypothalamus.config_manager import ConfigManager
 from hypothalamus.logger import log
 
 class ConversationFlow:
@@ -265,7 +266,14 @@ class ConversationFlow:
 
     async def _send_to_tts(self, text: str):
         """Envoie du texte au TTS - ADAPTÉ NOUVELLE ARCHITECTURE"""
-        
+        # Vérifier si l'audio est en sourdine
+        config_manager = ConfigManager()
+        is_muted = config_manager.get_config().get('audio', {}).get('output', {}).get('muted', False)
+
+        if is_muted:
+            log.debug("🔇 Audio en sourdine, chunk TTS ignoré.", "🔊")
+            return
+
         # PRIORITÉ 1: Nouvelle architecture avec AudioPipeline
         if hasattr(self.tts, 'pipeline') and hasattr(self.tts.pipeline, 'queue_text_chunk'):
             await self.tts.pipeline.queue_text_chunk(text)
@@ -340,16 +348,16 @@ class ConversationFlow:
                 
                 # 🔥 OPTIMISATION: Détection phrase complète → Envoi IMMÉDIAT TTS
                 if self._is_sentence_complete(sentence_buffer):
-                    clean_sentence = sentence_buffer.strip()
+                    sentence_to_process = sentence_buffer.strip()
                     
-                    if clean_sentence:
+                    if sentence_to_process:
                         # Mesurer temps premier audio
                         if first_audio_time is None:
                             first_audio_time = time.time() - session_start
                         
                         # Envoi au TTS (nouvelle architecture compatible)
-                        await self._send_to_tts(clean_sentence)
-                        log.debug(f"✅ Chunk envoyé: {clean_sentence[:40]}...", "🔊")
+                        await self._send_to_tts(sentence_to_process)
+                        log.debug(f"✅ Chunk envoyé: {sentence_to_process[:40]}...", "🔊")
                     
                     sentence_buffer = ""  # Reset buffer
                 
@@ -492,6 +500,28 @@ class ConversationFlow:
         except Exception as e:
             log.error(f"Erreur rechargement TTS: {e}")
             raise
+
+    async def reload_llm(self, model_name: str):
+        """Change le modèle du client LLM existant."""
+        try:
+            if self.llm:
+                log.info(f"Changement du modèle LLM vers : {model_name}")
+                self.llm.change_model(model_name)
+                log.success(f"Modèle LLM changé vers : {model_name}")
+            else:
+                log.warning("Le client LLM n'est pas initialisé, impossible de changer de modèle.")
+        except Exception as e:
+            log.error(f"Erreur lors du changement de modèle LLM : {e}")
+            raise
+
+    async def update_audio_settings(self, speed: float = None, volume: int = None):
+        """Met à jour les paramètres audio du TTS."""
+        try:
+            if self.tts:
+                self.tts.update_voice_settings(speed=speed, volume=volume)
+                log.success(f"Paramètres audio mis à jour : vitesse={speed}, volume={volume}")
+        except Exception as e:
+            log.error(f"Erreur lors de la mise à jour des paramètres audio : {e}")
     
     def get_personality(self) -> str:
         """Retourne la personnalité actuelle"""

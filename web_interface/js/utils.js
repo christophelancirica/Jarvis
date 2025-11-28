@@ -421,6 +421,24 @@ window.addEventListener('unhandledrejection', function(event) {
     handleError(new Error(event.reason), 'Unhandled Promise');
 });
 
+/**
+ * Récupère la config actuelle du serveur
+ */
+async function getCurrentServerConfig() {
+    try {
+        const response = await fetch('/api/config');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Erreur récupération config serveur:', error);
+        addLogEntry('❌ Impossible de charger la configuration du serveur.', 'error');
+        return null;
+    }
+}
+
 // Export des fonctions pour utilisation dans d'autres modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -428,6 +446,7 @@ if (typeof module !== 'undefined' && module.exports) {
         formatDuration, formatTokenCount, generateUniqueId,
         debounce, throttle, isElementVisible, copyToClipboard,
         isValidEmail, isValidUrl, sanitizeString, formatFileSize,
-        getBrowserInfo, supportsFeature, handleError, createElement, showToast
+        getBrowserInfo, supportsFeature, handleError, createElement, showToast,
+        getCurrentServerConfig
     };
 }

@@ -28,10 +28,14 @@ class ConfigCoordinator:
             # 1. Validation simple
             validated_config = self._validate_config(new_config)
             
-            # 2. Application voix si nécessaire
-            if 'personality' in validated_config:
+            # 2. Application des changements
+            if 'voice' in validated_config:
                 await self._apply_voice_changes(validated_config)
-            
+            if 'llm' in validated_config and 'model' in validated_config['llm']:
+                await self._apply_llm_changes(validated_config)
+            if 'audio' in validated_config and 'output' in validated_config['audio']:
+                await self._apply_audio_settings_changes(validated_config)
+
             # 3. 🚀 SAUVEGARDE UNIFIÉE - Une seule ligne !
             success = config.update_config(validated_config)
             
@@ -95,7 +99,26 @@ class ConfigCoordinator:
         if 'background_opacity' in config:
             validated['interface'] = validated.get('interface', {})
             validated['interface']['background_opacity'] = int(config['background_opacity'])
+
+        if 'audio_device' in config:
+            validated['audio'] = validated.get('audio', {})
+            validated['audio']['input'] = validated['audio'].get('input', {})
+            validated['audio']['input']['device_index'] = int(config['audio_device'])
+
+        if 'audio_sensitivity' in config:
+            validated['audio'] = validated.get('audio', {})
+            validated['audio']['input'] = validated['audio'].get('input', {})
+            # Le VAD aggressiveness est généralement un entier de 0 à 3.
+            # On mappe la sensibilité (1-10) à cette échelle.
+            sensitivity = int(config['audio_sensitivity'])
+            vad_level = 3 if sensitivity > 7 else 2 if sensitivity > 4 else 1 if sensitivity > 1 else 0
+            validated['audio']['input']['vad_aggressiveness'] = vad_level
         
+        if 'audio_output_muted' in config:
+            validated['audio'] = validated.get('audio', {})
+            validated['audio']['output'] = validated['audio'].get('output', {})
+            validated['audio']['output']['muted'] = bool(config['audio_output_muted'])
+
         return validated
     
     async def _apply_voice_changes(self, config: Dict[str, Any]):
@@ -110,11 +133,46 @@ class ConfigCoordinator:
             
             if personality:
                 # Charger la nouvelle voix
-                result = await self.conversation_flow.change_voice(personality)
-                log.success(f"🔊 Voix appliquée: {result}")
+                result = await self.conversation_flow.reload_tts(None, personality)
+                log.success(f"🔊 Voix appliquée: {personality}")
                 
         except Exception as e:
             log.error(f"❌ Erreur application voix: {e}")
+
+    async def _apply_llm_changes(self, config: Dict[str, Any]):
+        """Application des changements de modèle LLM."""
+        try:
+            if not self.conversation_flow:
+                log.warning("ConversationFlow non disponible pour le changement de LLM.")
+                return
+
+            llm_config = config.get('llm', {})
+            model_name = llm_config.get('model')
+
+            if model_name:
+                await self.conversation_flow.reload_llm(model_name)
+                log.success(f"🤖 Modèle LLM appliqué : {model_name}")
+
+        except Exception as e:
+            log.error(f"❌ Erreur application modèle LLM : {e}")
+
+    async def _apply_audio_settings_changes(self, config: Dict[str, Any]):
+        """Application des changements de paramètres audio."""
+        try:
+            if not self.conversation_flow:
+                log.warning("ConversationFlow non disponible pour la mise à jour des paramètres audio.")
+                return
+
+            audio_config = config.get('audio', {}).get('output', {})
+            speed = audio_config.get('speed')
+            volume = audio_config.get('volume')
+
+            if speed is not None or volume is not None:
+                await self.conversation_flow.update_audio_settings(speed=speed, volume=volume)
+                log.success(f"🔊 Paramètres audio appliqués : vitesse={speed}, volume={volume}")
+
+        except Exception as e:
+            log.error(f"❌ Erreur application paramètres audio : {e}")
     
     def get_current_config(self) -> Dict[str, Any]:
         """Retourne la configuration actuelle"""

@@ -9,20 +9,23 @@ let themesConfig = null;
 /**
  * Charge la configuration des thèmes depuis themes.json
  */
-async function loadThemesConfig() {
-    try {
-        const response = await fetch('config/themes.json');
-        if (response.ok) {
-            themesConfig = await response.json();
+function loadThemesConfig() {
+    return fetch('config/themes.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            themesConfig = data;
             addLogEntry('✅ Configuration thèmes chargée', 'success');
             return true;
-        } else {
-            throw new Error(`HTTP ${response.status}`);
-        }
-    } catch (error) {
-        addLogEntry(`❌ Erreur chargement themes.json: ${error.message}`, 'error');
-        return false;
-    }
+        })
+        .catch(error => {
+            addLogEntry(`❌ Erreur chargement themes.json: ${error.message}`, 'error');
+            return false;
+        });
 }
 
 /**
@@ -322,8 +325,14 @@ function previewTheme(theme) {
  */
 function initializeThemeEvents() {
     loadThemesConfig();
+
     // Gestion du changement depuis les paramètres
-    document.addEventListener('DOMContentLoaded', handleThemeSelectChange);
+    const themeSelect = document.getElementById('interface-theme');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', (event) => {
+            applyThemeFromSettings(event.target.value);
+        });
+    }
     
     // Gestion du raccourci clavier pour changer de thème
     document.addEventListener('keydown', function(event) {

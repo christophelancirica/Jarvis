@@ -637,20 +637,6 @@ function getChangedSettings(current, newSettings) {
     return changes;
 }
 
-/**
- * Récupère la config actuelle du serveur
- */
-async function getCurrentServerConfig() {
-    try {
-        const response = await fetch('/api/config');
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Erreur récupération config serveur:', error);
-        return {};
-    }
-}
-
 // 🚀 Nettoyage automatique lors du déchargement de page
 window.addEventListener('beforeunload', function() {
     flushBatchedChanges();

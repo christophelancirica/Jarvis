@@ -94,11 +94,8 @@ function addLogEntry(message, type = 'info') {
     logDiv.appendChild(messageSpan);
     container.appendChild(logDiv);
     
-    // Limiter le nombre de logs pour éviter les problèmes de performance
-    const maxLogs = 100;
-    while (container.children.length > maxLogs) {
-        container.removeChild(container.firstChild);
-    }
+    // Appel au nettoyage pour limiter le nombre de logs
+    cleanupLogs();
     
     // Scroll automatique vers le bas
     container.scrollTop = container.scrollHeight;
@@ -110,31 +107,46 @@ function addLogEntry(message, type = 'info') {
 }
 
 /**
+ * Nettoie les anciens logs du DOM pour éviter les surcharges mémoire
+ */
+function cleanupLogs() {
+    const container = document.getElementById('log-container');
+    if (!container) return;
+    
+    const maxLogs = 100; // Garde les 100 logs les plus récents
+    while (container.children.length > maxLogs) {
+        container.removeChild(container.firstChild);
+    }
+}
+
+/**
  * Met à jour l'affichage de configuration dans le debug
  */
-function updateDebugConfigDisplay() {
-    // Cette fonction sera appelée quand on ouvre l'onglet config
-    const elements = {
-        'config-personality': 'Chargement...',
-        'config-llm': 'Chargement...',
-        'config-tts': 'Chargement...',
-        'config-audio': 'Chargement...'
-    };
-    
-    // Mettre à jour immédiatement avec les valeurs par défaut
-    Object.entries(elements).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
-        }
-    });
-    
-    // Puis charger les vraies valeurs
-    loadCurrentConfig().then(config => {
+async function updateDebugConfigDisplay() {
+    try {
+        const config = await getCurrentServerConfig();
         if (config) {
             updateConfigDisplay(config);
         }
-    });
+    } catch (error) {
+        addLogEntry('❌ Erreur de mise à jour de la configuration de débogage.', 'error');
+    }
+}
+
+/**
+ * Met à jour le DOM avec les valeurs de configuration
+ * @param {Object} config - L'objet de configuration du serveur
+ */
+function updateConfigDisplay(config) {
+    const personality = config.voice?.personality || '-';
+    const llmModel = config.llm?.model || '-';
+    const ttsModel = config.voice?.model || '-';
+    const audioDevice = config.audio?.input?.device_name || 'Default';
+
+    document.getElementById('config-personality').textContent = personality;
+    document.getElementById('config-llm').textContent = llmModel;
+    document.getElementById('config-tts').textContent = ttsModel;
+    document.getElementById('config-audio').textContent = audioDevice;
 }
 
 /**

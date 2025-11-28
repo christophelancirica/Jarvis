@@ -32,6 +32,22 @@ class DeviceManager:
             json.dump(config, f, indent=2, ensure_ascii=False)
         print(f"✅ Micro sauvegardé : {device_name} (index {device_index})")
     
+    def get_available_devices(self):
+        """Retourne une liste de tous les périphériques d'entrée audio disponibles."""
+        devices = []
+        p = pyaudio.PyAudio()
+        try:
+            for i in range(p.get_device_count()):
+                info = p.get_device_info_by_index(i)
+                if info.get('maxInputChannels') > 0:
+                    devices.append({
+                        'index': i,
+                        'name': info.get('name')
+                    })
+        finally:
+            p.terminate()
+        return devices
+
     def verify_device(self, device_index):
         """Vérifie qu'un device existe toujours"""
         try:

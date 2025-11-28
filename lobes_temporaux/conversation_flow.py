@@ -340,16 +340,20 @@ class ConversationFlow:
                 
                 # 🔥 OPTIMISATION: Détection phrase complète → Envoi IMMÉDIAT TTS
                 if self._is_sentence_complete(sentence_buffer):
-                    clean_sentence = sentence_buffer.strip()
+                    sentence_to_process = sentence_buffer.strip()
                     
-                    if clean_sentence:
-                        # Mesurer temps premier audio
-                        if first_audio_time is None:
-                            first_audio_time = time.time() - session_start
+                    if sentence_to_process:
+                        # Nettoyer le texte pour le TTS
+                        clean_sentence = self._clean_text_for_tts(sentence_to_process)
                         
-                        # Envoi au TTS (nouvelle architecture compatible)
-                        await self._send_to_tts(clean_sentence)
-                        log.debug(f"✅ Chunk envoyé: {clean_sentence[:40]}...", "🔊")
+                        if clean_sentence:
+                            # Mesurer temps premier audio
+                            if first_audio_time is None:
+                                first_audio_time = time.time() - session_start
+
+                            # Envoi au TTS (nouvelle architecture compatible)
+                            await self._send_to_tts(clean_sentence)
+                            log.debug(f"✅ Chunk envoyé: {clean_sentence[:40]}...", "🔊")
                     
                     sentence_buffer = ""  # Reset buffer
                 
@@ -359,8 +363,10 @@ class ConversationFlow:
             
             # Traiter le reste du buffer s'il y a du contenu
             if sentence_buffer.strip():
-                await self._send_to_tts(sentence_buffer.strip())
-                log.debug("✅ Dernier chunk envoyé", "🔊")
+                clean_last_chunk = self._clean_text_for_tts(sentence_buffer.strip())
+                if clean_last_chunk:
+                    await self._send_to_tts(clean_last_chunk)
+                    log.debug("✅ Dernier chunk envoyé", "🔊")
             
             # Finaliser le pipeline si actif avec timeout dynamique
             if self._supports_pipeline():
@@ -457,6 +463,28 @@ class ConversationFlow:
             return True
         
         return False
+
+    def _clean_text_for_tts(self, text: str) -> str:
+        """Nettoie le texte avant de l'envoyer au TTS."""
+        import re
+        # Supprime le contenu entre les balises <think> et </think>
+        text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        # Supprime les émojis
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"  # emoticons
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F680-\U0001F6FF"  # transport & map symbols
+            "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+            "\U00002702-\U000027B0"
+            "\U000024C2-\U0001F251"
+            "]+",
+            flags=re.UNICODE,
+        )
+        text = emoji_pattern.sub(r"", text)
+        # Supprime les astérisques d'action (ex: *sourit*)
+        text = re.sub(r'\*.*?\*', '', text)
+        return text.strip()
     
     async def reload_tts(self, model_name, personality, edge_voice=None, sample_path=None, embedding_path=None):
         """Recharge le TTS avec une nouvelle voix"""
@@ -492,6 +520,28 @@ class ConversationFlow:
         except Exception as e:
             log.error(f"Erreur rechargement TTS: {e}")
             raise
+
+    async def reload_llm(self, model_name: str):
+        """Change le modèle du client LLM existant."""
+        try:
+            if self.llm:
+                log.info(f"Changement du modèle LLM vers : {model_name}")
+                self.llm.change_model(model_name)
+                log.success(f"Modèle LLM changé vers : {model_name}")
+            else:
+                log.warning("Le client LLM n'est pas initialisé, impossible de changer de modèle.")
+        except Exception as e:
+            log.error(f"Erreur lors du changement de modèle LLM : {e}")
+            raise
+
+    async def update_audio_settings(self, speed: float = None, volume: int = None):
+        """Met à jour les paramètres audio du TTS."""
+        try:
+            if self.tts:
+                self.tts.update_voice_settings(speed=speed, volume=volume)
+                log.success(f"Paramètres audio mis à jour : vitesse={speed}, volume={volume}")
+        except Exception as e:
+            log.error(f"Erreur lors de la mise à jour des paramètres audio : {e}")
     
     def get_personality(self) -> str:
         """Retourne la personnalité actuelle"""

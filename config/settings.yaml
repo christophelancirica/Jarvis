@@ -1,5 +1,6 @@
 audio:
   input:
+    device_index: 0
     language: fr
     sensitivity: 5
     silence_duration: 1.5
@@ -8,7 +9,7 @@ audio:
     whisper_model: small
   output:
     device_index: null
-    speed: 1.0
+    speed: 0.6
     volume: 90
 interface:
   background: images/One_piece.jpg
@@ -30,6 +31,6 @@ voice:
   display_name: Samantha
   edge_voice: fr-FR-DeniseNeural
   embedding_path: null
-  personality: Eloise
+  personality: GoogleFR
   sample_path: null
   tts_model: edge-tts

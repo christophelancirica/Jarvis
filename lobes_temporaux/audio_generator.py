@@ -86,23 +86,45 @@ class AudioGenerator:
             return None
 
     async def _generate_gtts(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
-        """Génération Google Translate TTS (gTTS)"""
+        """Génération Google Translate TTS (gTTS) avec post-traitement de la vitesse."""
         try:
+            from pydub import AudioSegment
+            import io
+
             lang = voice_config.get('lang', 'fr')
-            log.debug(f"gTTS: lang={lang}")
+            speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
+            log.debug(f"gTTS: lang={lang}, speed={speed}")
 
             tts = gTTS(text=text, lang=lang, slow=False)
 
-            with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as tmp:
-                tmp_path = tmp.name
+            # Sauvegarder l'audio dans un buffer en mémoire
+            mp3_fp = io.BytesIO()
+            tts.write_to_fp(mp3_fp)
+            mp3_fp.seek(0)
 
-            tts.save(tmp_path)
-
-            with open(tmp_path, 'rb') as f:
-                audio_data = f.read()
-
-            os.unlink(tmp_path)
-
+            # Post-traitement Pydub (Nouvelle version : Resampling pur)
+            if not (0.95 < speed < 1.05): # Si on s'éloigne de 1.0 (marge de tolérance)
+                log.debug(f"🎛️ Application vitesse via Resampling: {speed}x")
+                
+                audio = AudioSegment.from_file(mp3_fp, format="mp3")
+                
+                new_frame_rate = int(audio.frame_rate * speed)
+                
+                audio = audio._spawn(audio.raw_data, overrides={
+                    "frame_rate": new_frame_rate
+                })
+                
+                audio = audio.set_frame_rate(24000) # 24000 est le standard gTTS
+                
+                output_fp = io.BytesIO()
+                audio.export(output_fp, format="mp3")
+                output_fp.seek(0)
+                audio_data = output_fp.read()
+                
+            else:
+                # Vitesse normale (1.0) - Pas de modification
+                audio_data = mp3_fp.read()
+            
             log.debug(f"✅ gTTS généré: {len(audio_data)} bytes")
             return audio_data
 
@@ -114,7 +136,7 @@ class AudioGenerator:
         """Génération TTS système (pyttsx3)"""
         try:
             engine = pyttsx3.init()
-
+            
             # Vitesse
             rate = engine.getProperty('rate')
             voice_speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
@@ -128,15 +150,15 @@ class AudioGenerator:
 
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
                 tmp_path = tmp.name
-
+            
             engine.save_to_file(text, tmp_path)
             engine.runAndWait()
-
+            
             with open(tmp_path, 'rb') as f:
                 audio_data = f.read()
-
+            
             os.unlink(tmp_path)
-
+            
             log.debug(f"✅ System TTS généré: {len(audio_data)} bytes")
             return audio_data
 

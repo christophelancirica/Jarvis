@@ -256,15 +256,7 @@ async function populateVoiceSelectFromAPI(standardVoices, clonedVoices) {
             category.voices.forEach(({ id, voice }) => {
                 const option = document.createElement('option');
                 option.value = id;
-                let indicators = '';
-                if (voice.model === 'edge-tts' || voice.model === 'piper') {
-                    indicators = ' 🟢⚡'; // Streaming | Vitesse native
-                } else if (voice.model === 'gtts') {
-                    indicators = ' 🟠🐌'; // Différé | Vitesse simulée
-                } else if (voice.model === 'xtts-v2') {
-                    indicators = ' 🟠💎'; // Différé | Haute Qualité
-                }
-                option.textContent = (voice.display_name || voice.name) + indicators;
+                option.textContent = voice.display_name || voice.name;
                 category.element.appendChild(option);
             });
             voiceSelect.appendChild(category.element);
@@ -419,12 +411,6 @@ async function loadAudioDevicesFromAPI() {
 async function updateUI() {
     try {
         addLogEntry('🎨 Mise à jour interface unifiée...', 'info');
-
-        // Initialiser l'état 'muet'
-        if (window.jarvisConfig?.audio?.output?.muted !== undefined) {
-            isMuted = window.jarvisConfig.audio.output.muted;
-        }
-        updateMuteButton();
 
         // Appliquer la configuration de l'interface maintenant que les thèmes sont chargés
         if (window.jarvisConfig?.interface) {

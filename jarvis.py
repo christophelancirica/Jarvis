@@ -405,33 +405,15 @@ def create_web_app():
             # La méthode `speak` est idéale pour ça si elle accepte un override de la voix.
             # En l'absence d'une telle méthode, on recharge temporairement.
             
-            # Récupérer la configuration de la voix pour obtenir le modèle et les détails
-            all_voices = voice_cloner.get_all_voices()
-            voice_config = all_voices.get('voices', {}).get(voice_id) or all_voices.get('cloned_voices', {}).get(voice_id)
-
-            if not voice_config:
-                raise Exception(f"Configuration pour la voix '{voice_id}' introuvable.")
-
-            # Sauvegarder la personnalité actuelle pour la restaurer après le test
+            # NOTE: Pour une meilleure architecture, flow.tts.speak devrait pouvoir
+            # prendre un `voice_id` en paramètre. Solution temporaire :
             current_personality = flow.get_personality()
-            current_voice_config = voice_cloner.get_voice_config(current_personality)
-
-
-            # Recharger le TTS avec la voix de test et sa configuration complète
-            await flow.reload_tts(
-                model_name=voice_config.get('model'),
-                personality=voice_id,
-                edge_voice=voice_config.get('edge_voice')
-            )
+            await flow.reload_tts(None, voice_id) # Recharge avec la nouvelle voix
 
             await flow.tts.speak(text)
 
-            # Revenir à la voix originale en utilisant sa configuration complète
-            await flow.reload_tts(
-                model_name=current_voice_config.get('model'),
-                personality=current_personality,
-                edge_voice=current_voice_config.get('edge_voice')
-            )
+            # Revenir à la voix originale
+            await flow.reload_tts(None, current_personality)
             
             return {"success": True}
         except Exception as e:

@@ -304,9 +304,16 @@ class ConversationFlow:
         
         try:
             log.debug("🚀 Démarrage pipeline complet LLM + TTS", "🔊")
+
+            # 🔇 Vérification mode muet (Optimisation P1)
+            config_manager = ConfigManager()
+            is_muted = config_manager.get_config().get('audio', {}).get('output', {}).get('muted', False)
+
+            if is_muted:
+                log.debug("🔇 Mode Muet activé : Pipeline TTS désactivé (Optimisation)", "🔊")
             
-            # Démarrer le pipeline TTS si supporté
-            if self._supports_pipeline():
+            # Démarrer le pipeline TTS si supporté ET non muet
+            if not is_muted and self._supports_pipeline():
                 log.debug("🚀 PIPELINE: Démarrage workers...", "🔊")
                 
                 # NOUVEAU: Démarrage pipeline selon architecture
@@ -318,12 +325,14 @@ class ConversationFlow:
                     log.debug("✅ ANCIEN pipeline TTS démarré", "🔊")
                 
                 log.debug("✅ Pipeline TTS démarré", "🔊")
+            elif is_muted:
+                log.debug("🔇 Pas de démarrage workers (Muet)", "🔊")
             else:
                 log.debug("⚠️ Utilisation ancien système TTS", "⚠️")
             
             # 🔥 STREAMING depuis Ollama (LLM unifié)
             # 🧠 NOUVEAU: Préchauffer TTS pendant que LLM démarre sa réflexion
-            if self._supports_pipeline():
+            if not is_muted and self._supports_pipeline():
                 # NOUVEAU: Warm-up selon architecture
                 if hasattr(self.tts, 'pipeline'):
                     # Le warm-up est automatique dans AudioPipeline
@@ -347,7 +356,8 @@ class ConversationFlow:
                 sentence_buffer += token
                 
                 # 🔥 OPTIMISATION: Détection phrase complète → Envoi IMMÉDIAT TTS
-                if self._is_sentence_complete(sentence_buffer):
+                # Ne traiter pour le TTS que si non muet
+                if not is_muted and self._is_sentence_complete(sentence_buffer):
                     sentence_to_process = sentence_buffer.strip()
                     
                     if sentence_to_process:
@@ -370,14 +380,14 @@ class ConversationFlow:
                     await asyncio.sleep(0.001)
             
             # Traiter le reste du buffer s'il y a du contenu
-            if sentence_buffer.strip():
+            if not is_muted and sentence_buffer.strip():
                 clean_last_chunk = self._clean_text_for_tts(sentence_buffer.strip())
                 if clean_last_chunk:
                     await self._send_to_tts(clean_last_chunk)
                     log.debug("✅ Dernier chunk envoyé", "🔊")
             
             # Finaliser le pipeline si actif avec timeout dynamique
-            if self._supports_pipeline():
+            if not is_muted and self._supports_pipeline():
                 # Timeout adaptatif selon la longueur de la réponse
                 estimated_time = token_count * 0.3  # 0.3s par token
                 dynamic_timeout = max(60.0, estimated_time)  # Minimum 60s

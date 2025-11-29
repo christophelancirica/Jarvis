@@ -9,7 +9,7 @@ audio:
     whisper_model: small
   output:
     device_index: null
-    speed: 0.6
+    speed: 1.9
     volume: 90
 interface:
   background: images/One_piece.jpg
@@ -31,6 +31,6 @@ voice:
   display_name: Samantha
   edge_voice: fr-FR-DeniseNeural
   embedding_path: null
-  personality: GoogleFR
+  personality: Jarvis
   sample_path: null
   tts_model: edge-tts

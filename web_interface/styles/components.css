@@ -39,6 +39,11 @@
     color: var(--text-primary);
 }
 
+.control-btn.muted {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
 /* Modals */
 .modal {
     position: fixed;

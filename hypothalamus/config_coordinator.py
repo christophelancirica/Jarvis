@@ -112,6 +112,11 @@ class ConfigCoordinator:
             vad_level = 3 if sensitivity > 7 else 2 if sensitivity > 4 else 1 if sensitivity > 1 else 0
             validated['audio']['input']['vad_aggressiveness'] = vad_level
         
+        if 'audio_output_muted' in config:
+            validated['audio'] = validated.get('audio', {})
+            validated['audio']['output'] = validated['audio'].get('output', {})
+            validated['audio']['output']['muted'] = bool(config['audio_output_muted'])
+
         return validated
     
     async def _apply_voice_changes(self, config: Dict[str, Any]):

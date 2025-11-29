@@ -609,6 +609,33 @@ async function main() {
 // Point d'entrée unique de l'application
 document.addEventListener('DOMContentLoaded', main);
 
+let isMuted = false;
+
+function toggleMute() {
+    isMuted = !isMuted;
+    updateMuteButton();
+    sendWebSocketMessage({
+        type: 'config_update',
+        config: { audio_output_muted: isMuted }
+    });
+    addLogEntry(`🔊 Audio ${isMuted ? 'désactivé' : 'activé'}`, 'info');
+}
+
+function updateMuteButton() {
+    const muteBtn = document.getElementById('mute-btn');
+    if (muteBtn) {
+        if (isMuted) {
+            muteBtn.innerHTML = '🔇';
+            muteBtn.title = 'Activer la voix';
+            muteBtn.classList.add('muted');
+        } else {
+            muteBtn.innerHTML = '🔊';
+            muteBtn.title = 'Désactiver la voix';
+            muteBtn.classList.remove('muted');
+        }
+    }
+}
+
 // Fallback si DOMContentLoaded a déjà été déclenché
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', main);

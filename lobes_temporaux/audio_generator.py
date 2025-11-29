@@ -103,24 +103,22 @@ class AudioGenerator:
             mp3_fp.seek(0)
 
             # Post-traitement Pydub (Nouvelle version : Resampling pur)
-            if not (0.95 < speed < 1.05): # Si on s'éloigne de 1.0 (marge de tolérance)
+            # Snippet de Resampling pour gTTS
+            if speed != 1.0:
                 log.debug(f"🎛️ Application vitesse via Resampling: {speed}x")
                 
                 audio = AudioSegment.from_file(mp3_fp, format="mp3")
                 
+                # On change le frame_rate pour altérer la vitesse (et le pitch) mathématiquement
                 new_frame_rate = int(audio.frame_rate * speed)
-                
-                audio = audio._spawn(audio.raw_data, overrides={
-                    "frame_rate": new_frame_rate
-                })
-                
-                audio = audio.set_frame_rate(24000) # 24000 est le standard gTTS
-                
+                audio = audio._spawn(audio.raw_data, overrides={"frame_rate": new_frame_rate})
+                audio = audio.set_frame_rate(24000) # Reset au standard gTTS
+
                 output_fp = io.BytesIO()
                 audio.export(output_fp, format="mp3")
                 output_fp.seek(0)
                 audio_data = output_fp.read()
-                
+
             else:
                 # Vitesse normale (1.0) - Pas de modification
                 audio_data = mp3_fp.read()

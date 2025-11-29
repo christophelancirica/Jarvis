@@ -33,27 +33,31 @@ class VoiceManager:
                 with open(self.voices_json, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 
-                # Voix standard (Edge-TTS + Coqui)
-                idx = 1
+                # Voix standard (Edge-TTS + Coqui + gTTS)
                 for voice_id, voice_data in data.get('voices', {}).items():
-                    voices[str(idx)] = {
+                    # On utilise l'ID réel (ex: "Jarvis", "GoogleFR") comme clé
+                    key = voice_id
+                    voices[key] = {
                         "name": voice_data.get('display_name', voice_data['name']),
+                        "display_name": voice_data.get('display_name', voice_data['name']),
                         "model": voice_data['model'],
                         "voice": voice_data.get('edge_voice'),
                         "edge_voice": voice_data.get('edge_voice'),
-                        "personality": voice_data['name'],
+                        "lang": voice_data.get('lang'), # Important pour gTTS
+                        "personality": voice_data['name'], # Ou voice_id si name != id
                         "gender": voice_data.get('gender', 'unknown'),
                         "description": voice_data.get('description', ''),
                         "voice_id": voice_id,
                         "type": "standard"
                     }
-                    idx += 1
                 
                 # Voix clonées (XTTS) - AVEC NORMALISATION DES CHEMINS
                 for voice_id, voice_data in data.get('cloned_voices', {}).items():
                     if voice_data.get('processing_status') == 'ready':
-                        voices[str(idx)] = {
+                        key = voice_id
+                        voices[key] = {
                             "name": voice_data.get('display_name', voice_data['name']),
+                            "display_name": voice_data.get('display_name', voice_data['name']),
                             "model": "xtts-v2",
                             # ⚡ NORMALISATION des chemins en format Unix
                             "sample_path": Path(voice_data['sample_path']).as_posix(),
@@ -64,7 +68,6 @@ class VoiceManager:
                             "voice_id": voice_id,
                             "type": "cloned"
                         }
-                        idx += 1
             
             # Fallback si voices.json n'existe pas
             if not voices:
@@ -78,38 +81,37 @@ class VoiceManager:
 
     def _get_default_voices(self):
         """Voix par défaut si voices.json absent"""
+        # On utilise des IDs stables
         return {
-            "1": {
+            "Jarvis": {
                 "name": "Jarvis (Homme - Français)",
+                "display_name": "Jarvis (Masculin - Russe)",
                 "model": "tts_models/fr/css10/vits",
                 "personality": "Jarvis",
+                "voice_id": "Jarvis",
                 "gender": "male",
                 "description": "Voix masculine française, style assistant",
                 "type": "standard"
             },
-            "2": {
+            "Samantha": {
                 "name": "Samantha (Femme - Français)",
+                "display_name": "Samantha (Féminin)",
                 "model": "edge-tts",
                 "voice": "fr-FR-DeniseNeural",
                 "edge_voice": "fr-FR-DeniseNeural",
                 "personality": "Samantha",
+                "voice_id": "Samantha",
                 "gender": "female",
                 "description": "Voix féminine française, chaleureuse",
                 "type": "standard"
             },
-            "3": {
+            "Eloise": {
                 "name": "Eloise (jeune fille- Edge)",
+                "display_name": "Eloise (Petite fille)",
                 "model": "edge-tts",
                 "edge_voice": "fr-FR-EloiseNeural", 
                 "personality": "Eloise",
-                "gender": "female", 
-                "description": "Voix féminine jeune et dynamique"
-            },
-            "4": {
-                "name": "Josephine (jeune femme - Edge)",
-                "model": "edge-tts",
-                "edge_voice": "fr-FR-JosephineNeural", 
-                "personality": "Josephine",
+                "voice_id": "Eloise",
                 "gender": "female", 
                 "description": "Voix féminine jeune et dynamique"
             }

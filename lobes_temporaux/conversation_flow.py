@@ -564,6 +564,12 @@ class ConversationFlow:
             personality = self.get_personality()
             return f"Assistant virtuel - {personality}"
         
+    def update_voice_settings(self, speed: float = None, volume: int = None):
+        """Met à jour les paramètres de voix en direct"""
+        if self.tts:
+            self.tts.update_voice_settings(speed, volume)
+            log.info(f"🔊 Paramètres voix mis à jour: Speed={speed}, Volume={volume}")
+
     def get_history(self) -> Dict[str, Any]:
         """Retourne l'historique de conversation avec stats pipeline"""
         return {

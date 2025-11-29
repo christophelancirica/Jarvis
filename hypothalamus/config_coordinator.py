@@ -126,6 +126,7 @@ class ConfigCoordinator:
                 log.warning("ConversationFlow non disponible")
                 return
             
+            # Changement de personnalité
             voice_config = config.get('voice', {})
             personality = voice_config.get('personality')
             
@@ -133,7 +134,16 @@ class ConfigCoordinator:
                 # Charger la nouvelle voix
                 result = await self.conversation_flow.reload_tts(None, personality)
                 log.success(f"🔊 Voix appliquée: {personality}")
-                
+
+            # Changement de paramètres audio (vitesse/volume)
+            audio_config = config.get('audio', {}).get('output', {})
+            speed = audio_config.get('speed')
+            volume = audio_config.get('volume')
+
+            if speed is not None or volume is not None:
+                self.conversation_flow.update_voice_settings(speed=speed, volume=volume)
+                log.success(f"🔊 Paramètres audio appliqués: Speed={speed}, Volume={volume}")
+
         except Exception as e:
             log.error(f"❌ Erreur application voix: {e}")
 

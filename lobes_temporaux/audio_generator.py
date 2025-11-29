@@ -86,46 +86,22 @@ class AudioGenerator:
             return None
 
     async def _generate_gtts(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
-        """Génération Google Translate TTS (gTTS) avec post-traitement de la vitesse."""
+        """Génération Google Translate TTS (gTTS)"""
         try:
-            from pydub import AudioSegment
-            import io
-
             lang = voice_config.get('lang', 'fr')
-            speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
-            log.debug(f"gTTS: lang={lang}, speed={speed}")
+            log.debug(f"gTTS: lang={lang}")
 
             tts = gTTS(text=text, lang=lang, slow=False)
 
-            # Sauvegarder l'audio dans un buffer en mémoire
-            mp3_fp = io.BytesIO()
-            tts.write_to_fp(mp3_fp)
-            mp3_fp.seek(0)
+            with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as tmp:
+                tmp_path = tmp.name
 
-            # Post-traitement avec pydub si la vitesse n'est pas standard
-            if speed != 1.0:
-                log.debug(f"🐌 Application de la vitesse simulée: {speed}x")
-                audio = AudioSegment.from_file(mp3_fp, format="mp3")
+            tts.save(tmp_path)
 
-                # Modifier la vitesse
-                if speed > 1.0:
-                    audio = audio.speedup(playback_speed=speed)
-                else: # speed < 1.0
-                    # pydub ne gère pas le ralentissement directement, nous devons le simuler
-                    # Note : Ceci n'est pas une vraie modification de vitesse mais un hack
-                    # Pour un vrai ralentissement, il faudrait des librairies plus complexes (ex: sox)
-                    log.warning("Le ralentissement pour gTTS est expérimental.")
-                    # Cette approche n'est pas idéale, mais c'est le mieux qu'on puisse faire avec pydub
-                    # On va simplement exporter sans changement pour éviter les artefacts
-                    pass
+            with open(tmp_path, 'rb') as f:
+                audio_data = f.read()
 
-                # Exporter l'audio modifié dans un nouveau buffer
-                output_fp = io.BytesIO()
-                audio.export(output_fp, format="mp3")
-                output_fp.seek(0)
-                audio_data = output_fp.read()
-            else:
-                audio_data = mp3_fp.read()
+            os.unlink(tmp_path)
 
             log.debug(f"✅ gTTS généré: {len(audio_data)} bytes")
             return audio_data

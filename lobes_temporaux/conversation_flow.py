@@ -351,7 +351,9 @@ class ConversationFlow:
                     sentence_to_process = sentence_buffer.strip()
                     
                     if sentence_to_process:
+                        # Nettoyer le texte pour le TTS
                         clean_sentence = self._clean_text_for_tts(sentence_to_process)
+                        
                         if clean_sentence:
                             # Mesurer temps premier audio
                             if first_audio_time is None:
@@ -473,21 +475,24 @@ class ConversationFlow:
     def _clean_text_for_tts(self, text: str) -> str:
         """Nettoie le texte avant de l'envoyer au TTS."""
         import re
-        import emoji
-
-        # Ne pas supprimer les balises <think>
-        # text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-
-        # Étape 1: Convertir tous les emojis en leur description textuelle (ex: 😊 -> :visage_souriant:)
-        text_demojized = emoji.demojize(text)
-
-        # Étape 2: Supprimer toutes les descriptions d'émojis (ex: :visage_souriant:)
-        text_no_emojis = re.sub(r':\w+:', '', text_demojized)
-
+        # Supprime le contenu entre les balises <think> et </think>
+        text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        # Supprime les émojis
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"  # emoticons
+            "\U0001F300-\U0001F5FF"  # symbols & pictographs
+            "\U0001F680-\U0001F6FF"  # transport & map symbols
+            "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+            "\U00002702-\U000027B0"
+            "\U000024C2-\U0001F251"
+            "]+",
+            flags=re.UNICODE,
+        )
+        text = emoji_pattern.sub(r"", text)
         # Supprime les astérisques d'action (ex: *sourit*)
-        text_cleaned = re.sub(r'\*.*?\*', '', text_no_emojis)
-
-        return text_cleaned.strip()
+        text = re.sub(r'\*.*?\*', '', text)
+        return text.strip()
     
     async def reload_tts(self, model_name, personality, edge_voice=None, sample_path=None, embedding_path=None):
         """Recharge le TTS avec une nouvelle voix"""
@@ -536,15 +541,6 @@ class ConversationFlow:
         except Exception as e:
             log.error(f"Erreur lors du changement de modèle LLM : {e}")
             raise
-
-    async def update_audio_settings(self, speed: float = None, volume: int = None):
-        """Met à jour les paramètres audio du TTS."""
-        try:
-            if self.tts:
-                self.tts.update_voice_settings(speed=speed, volume=volume)
-                log.success(f"Paramètres audio mis à jour : vitesse={speed}, volume={volume}")
-        except Exception as e:
-            log.error(f"Erreur lors de la mise à jour des paramètres audio : {e}")
     
     def get_personality(self) -> str:
         """Retourne la personnalité actuelle"""

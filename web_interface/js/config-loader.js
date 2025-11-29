@@ -68,17 +68,9 @@ async function populateVoiceSelect() {
  * Peuple la liste des modèles LLM
  */
 function populateModelSelect() {
-    const llmSelect = document.getElementById('llm-model');
-    if (!llmSelect || !config.models?.llm_models) return;
-    
-    llmSelect.innerHTML = '';
-    Object.values(config.models.llm_models).forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.id;
-        option.textContent = model.display_name;
-        if (model.default) option.selected = true;
-        llmSelect.appendChild(option);
-    });
+    // Cette fonction est maintenant obsolète. Le chargement se fait
+    // de manière dynamique dans app-main.js via loadModelsFromAPI().
+    // On la laisse vide pour éviter des erreurs si elle est encore appelée.
 }
 
 /**

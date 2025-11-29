@@ -14,15 +14,41 @@ class JarvisLLM:
     
     def __init__(self, personality="Jarvis"):
         # Charger config
-        config_path = Path(__file__).parent.parent / "config\settings.yaml"
+        config_path = Path(__file__).parent.parent / "config/settings.yaml"
         
         with open(config_path, 'r', encoding='utf-8') as f:
             self.config = yaml.safe_load(f)
         
         self.model = self.config['llm']['model']
         self.personality = personality
+        self.conversation_history = []
+        self._initialize_system_prompt()
+        self._warmup_model()
         
         log.success(f"LLM prêt ({self.model}) - Mode: {personality}", "🧠")
+
+    def _warmup_model(self):
+        """Envoie une requête silencieuse pour charger le modèle en mémoire."""
+        try:
+            log.info(f"🔥 Préchauffage du modèle LLM: {self.model}...")
+            ollama.generate(model=self.model, prompt=".", options={"num_predict": 1}, keep_alive=0)
+            log.success(f"✅ Modèle {self.model} préchauffé.")
+        except Exception as e:
+            log.error(f"❌ Échec du préchauffage du modèle {self.model}: {e}")
+
+    def _initialize_system_prompt(self):
+        if self.personality == "Jarvis":
+            assistant_desc = (
+                "Tu es Jarvis, un assistant français intelligent, précis et un peu ironique. "
+                "Réponds toujours en français, de façon claire, naturelle et concise."
+            )
+        else:
+            assistant_desc = (
+                "Tu es Samantha, une assistante française douce, empathique et professionnelle. "
+                "Réponds toujours en français, de façon fluide, naturelle et concise."
+            )
+
+        self.conversation_history = [{'role': 'system', 'content': assistant_desc}]
 
     def estimate_complexity(self, text: str) -> str:
         """Analyse simple de la complexité (mots-clés + longueur)"""
@@ -58,69 +84,32 @@ class JarvisLLM:
 
     def generate_response_stream(self, user_input: str):
         """
-        🔥 STREAMING NATIF - Yield les tokens un par un depuis Ollama
-        Utilisé par l'interface web pour affichage temps réel
+        🔥 STREAMING NATIF avec CONTEXTE - Yield les tokens un par un depuis Ollama
+        Utilise ollama.chat pour maintenir l'historique.
         """
-        # 1️⃣ Estimation de la complexité locale
-        complexity = self.estimate_complexity(user_input)
-
-        # 2️⃣ Réglages dynamiques selon complexité
-        if complexity == "Express":
-            temperature = 0.3
-            max_tokens = 500
-        elif complexity == "Standard":
-            temperature = 0.5
-            max_tokens = 1200
-        else:  # Expert
-            temperature = 0.7
-            max_tokens = 3000
-
-        log.info(f"Complexité estimée : {complexity} ({temperature=}, {max_tokens=})")
-
-        # 3️⃣ Description du ton selon la personnalité
-        if self.personality == "Jarvis":
-            assistant_desc = (
-                "Tu es Jarvis, un assistant français intelligent, précis et un peu ironique. "
-                "Réponds toujours en français, de façon claire, naturelle et concise."
-            )
-        else:
-            assistant_desc = (
-                "Tu es Samantha, une assistante française douce, empathique et professionnelle. "
-                "Réponds toujours en français, de façon fluide, naturelle et concise."
-            )
-
-        # 4️⃣ Construire le prompt complet
-        prompt = f"""{assistant_desc}
-
-Question ({complexity}): {user_input}
-
-Réponse:"""
-
-        # 5️⃣ Appel à Ollama avec streaming natif
         try:
-            log.debug("Démarrage streaming Ollama...")
+            # Ajouter le message de l'utilisateur à l'historique
+            self.conversation_history.append({'role': 'user', 'content': user_input})
+
+            log.debug("Démarrage streaming Ollama avec contexte...")
             
-            # 🔥 STREAMING NATIF OLLAMA
-            stream = ollama.generate(
+            # Utiliser ollama.chat pour le streaming avec historique
+            stream = ollama.chat(
                 model=self.model,
-                prompt=prompt,
-                stream=True,  # ⚡ STREAMING ACTIVÉ
-                options={
-                    "temperature": temperature,
-                    "num_predict": max_tokens
-                }
+                messages=self.conversation_history,
+                stream=True
             )
             
-            # Yield chaque token reçu en temps réel
-            token_count = 0
+            assistant_response = ""
             for chunk in stream:
-                if 'response' in chunk:
-                    token = chunk['response']
-                    if token:  # Ignorer les tokens vides
-                        token_count += 1
-                        yield token
+                token = chunk['message']['content']
+                if token:
+                    assistant_response += token
+                    yield token
             
-            log.debug(f"Streaming terminé: {token_count} tokens")
+            # Ajouter la réponse complète de l'assistant à l'historique
+            self.conversation_history.append({'role': 'assistant', 'content': assistant_response})
+            log.debug("Streaming terminé et contexte mis à jour.")
 
         except Exception as e:
             log.error(f"Erreur streaming Ollama: {e}")
@@ -141,11 +130,18 @@ Réponse:"""
         return self.generate_response(user_input)
 
     def change_model(self, new_model: str):
-        """Change le modèle LLM à la volée"""
+        """Change le modèle LLM à la volée, réinitialise l'historique et préchauffe le nouveau modèle."""
         old_model = self.model
         self.model = new_model
-        log.info(f"🔄 Modèle changé: {old_model} → {new_model}")
+        self.clear_history()
+        self._warmup_model()
+        log.info(f"🔄 Modèle changé: {old_model} → {new_model}. L'historique de la conversation a été réinitialisé.")
         return True
+
+    def clear_history(self):
+        """Réinitialise l'historique de la conversation en ne gardant que le prompt système."""
+        self._initialize_system_prompt()
+        log.info("Historique de la conversation LLM réinitialisé.")
 
     def get_current_model(self) -> str:
         """Retourne le modèle actuellement utilisé"""

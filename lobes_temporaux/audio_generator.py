@@ -23,6 +23,10 @@ except ImportError:
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger(__name__)
 
+# Nouveaux imports pour gTTS et pyttsx3
+from gtts import gTTS
+import pyttsx3
+
 
 class AudioGenerator:
     """
@@ -69,12 +73,97 @@ class AudioGenerator:
                 return await self._generate_xtts(text, voice_config)
             elif model.startswith('tts_models/'):  # Coqui
                 return await self._generate_coqui(text, voice_config)
+            elif model == 'gtts':
+                return await self._generate_gtts(text, voice_config)
+            elif model == 'system':
+                return await self._generate_system(text, voice_config)
             else:
                 log.error(f"Modèle non supporté: {model}")
                 return None
                 
         except Exception as e:
             log.error(f"Erreur génération audio ({model}): {e}")
+            return None
+
+    async def _generate_gtts(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
+        """Génération Google Translate TTS (gTTS) avec post-traitement de la vitesse."""
+        try:
+            from pydub import AudioSegment
+            import io
+
+            lang = voice_config.get('lang', 'fr')
+            speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
+            log.debug(f"gTTS: lang={lang}, speed={speed}")
+
+            tts = gTTS(text=text, lang=lang, slow=False)
+
+            # Sauvegarder l'audio dans un buffer en mémoire
+            mp3_fp = io.BytesIO()
+            tts.write_to_fp(mp3_fp)
+            mp3_fp.seek(0)
+
+            # Post-traitement Pydub (Nouvelle version : Resampling pur)
+            if not (0.95 < speed < 1.05): # Si on s'éloigne de 1.0 (marge de tolérance)
+                log.debug(f"🎛️ Application vitesse via Resampling: {speed}x")
+
+                audio = AudioSegment.from_file(mp3_fp, format="mp3")
+
+                new_frame_rate = int(audio.frame_rate * speed)
+
+                audio = audio._spawn(audio.raw_data, overrides={
+                    "frame_rate": new_frame_rate
+                })
+
+                audio = audio.set_frame_rate(24000) # 24000 est le standard gTTS
+
+                output_fp = io.BytesIO()
+                audio.export(output_fp, format="mp3")
+                output_fp.seek(0)
+                audio_data = output_fp.read()
+
+            else:
+                # Vitesse normale (1.0) - Pas de modification
+                audio_data = mp3_fp.read()
+
+            log.debug(f"✅ gTTS généré: {len(audio_data)} bytes")
+            return audio_data
+
+        except Exception as e:
+            log.error(f"Erreur gTTS: {e}")
+            return None
+
+    async def _generate_system(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
+        """Génération TTS système (pyttsx3)"""
+        try:
+            engine = pyttsx3.init()
+
+            # Vitesse
+            rate = engine.getProperty('rate')
+            voice_speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
+            engine.setProperty('rate', int(rate * voice_speed))
+
+            # Volume
+            volume = voice_config.get('personality_config', {}).get('volume', 1.0)
+            engine.setProperty('volume', volume)
+
+            log.debug(f"System TTS: rate={int(rate * voice_speed)}, volume={volume}")
+
+            with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
+                tmp_path = tmp.name
+
+            engine.save_to_file(text, tmp_path)
+            engine.runAndWait()
+
+            with open(tmp_path, 'rb') as f:
+                audio_data = f.read()
+
+            os.unlink(tmp_path)
+
+            log.debug(f"✅ System TTS généré: {len(audio_data)} bytes")
+            return audio_data
+
+        except Exception as e:
+            log.error(f"Erreur System TTS: {e}")
             return None
     
     async def _generate_edge_tts(

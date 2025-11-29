@@ -50,6 +50,9 @@
                 <div class="dialogue-header">
                     <h2>💬 Conversation</h2>
                     <div class="dialogue-controls">
+                        <button id="mute-btn" class="control-btn" onclick="toggleMute()" title="Désactiver la voix">
+                            🔊
+                        </button>
                         <button class="control-btn" onclick="clearConversation()" title="Effacer la conversation">
                             🗑️
                         </button>
@@ -360,7 +363,7 @@
                         
                         <div class="setting-group">
                             <label for="audio-sensitivity">Sensibilité:</label>
-                            <input type="range" id="audio-sensitivity" min="1" max="10" value="5">
+                            <input type="range" id="audio-sensitivity" min="1" max="10" value="5" title="Définit l'agressivité de la détection vocale. Augmenter si Jarvis vous coupe la parole. Diminuer s'il a du mal à détecter votre voix.">
                             <span id="audio-sensitivity-value">5</span>
                         </div>
                         
@@ -493,6 +496,7 @@
     <!-- 8. Gestion des voix (Hypothalamus) -->
     <script src="static/js/voice-manager.js"></script>
     <script src="static/js/settings-modal.js"></script>
+    <script src="static/js/mic-test.js"></script>
     <script src="static/js/voice-lab.js"></script>
 
     <!-- 9. Script specifique sur les outils annexe -->

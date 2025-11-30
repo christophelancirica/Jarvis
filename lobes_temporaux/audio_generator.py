@@ -86,43 +86,55 @@ class AudioGenerator:
             return None
 
     async def _generate_gtts(self, text: str, voice_config: Dict[str, Any]) -> Optional[bytes]:
-        """Génération Google Translate TTS (gTTS) avec post-traitement de la vitesse."""
+        """Génération Google Translate TTS (gTTS) avec post-traitement vitesse et volume."""
         try:
             from pydub import AudioSegment
             import io
+            import math
 
             lang = voice_config.get('lang', 'fr')
-            speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
-            log.debug(f"gTTS: lang={lang}, speed={speed}")
+            personality_config = voice_config.get('personality_config', {})
+            speed = personality_config.get('voice_speed', 1.0)
+            volume_percent = personality_config.get('voice_volume', 1.0) # 0.0 to 1.0 normally, but check config
+
+            # Note: config.volume is usually 0-100 in backend, but tts.py divides by 100.
+            # Let's verify if voice_config has 0-1 or 0-100.
+            # In tts.py: base_config['personality_config']['voice_volume'] = audio_output_config.get('volume', 90) / 100.0
+            # So it is 0.0 to 1.0.
+
+            log.debug(f"gTTS: lang={lang}, speed={speed}, volume={volume_percent}")
 
             tts = gTTS(text=text, lang=lang, slow=False)
 
-            # Sauvegarder l'audio dans un buffer en mémoire
             mp3_fp = io.BytesIO()
             tts.write_to_fp(mp3_fp)
             mp3_fp.seek(0)
 
-            # Post-traitement Pydub (Nouvelle version : Resampling pur)
-            if not (0.95 < speed < 1.05): # Si on s'éloigne de 1.0 (marge de tolérance)
-                log.debug(f"🎛️ Application vitesse via Resampling: {speed}x")
-                
+            # Post-traitement Pydub (Speed + Volume)
+            if speed != 1.0 or volume_percent != 1.0:
                 audio = AudioSegment.from_file(mp3_fp, format="mp3")
-                
-                new_frame_rate = int(audio.frame_rate * speed)
-                
-                audio = audio._spawn(audio.raw_data, overrides={
-                    "frame_rate": new_frame_rate
-                })
-                
-                audio = audio.set_frame_rate(24000) # 24000 est le standard gTTS
-                
+
+                # 1. Vitesse (Resampling)
+                if speed != 1.0:
+                    log.debug(f"🎛️ Application vitesse gTTS: {speed}x")
+                    new_frame_rate = int(audio.frame_rate * speed)
+                    audio = audio._spawn(audio.raw_data, overrides={"frame_rate": new_frame_rate})
+                    audio = audio.set_frame_rate(24000)
+
+                # 2. Volume
+                if volume_percent != 1.0:
+                    # Convert percent to dB: dB = 20 * log10(percent)
+                    # Avoid log(0)
+                    vol = max(0.01, volume_percent)
+                    gain_db = 20 * math.log10(vol)
+                    log.debug(f"🎛️ Application volume gTTS: {volume_percent*100:.0f}% ({gain_db:.1f} dB)")
+                    audio = audio.apply_gain(gain_db)
+
                 output_fp = io.BytesIO()
                 audio.export(output_fp, format="mp3")
                 output_fp.seek(0)
                 audio_data = output_fp.read()
-                
             else:
-                # Vitesse normale (1.0) - Pas de modification
                 audio_data = mp3_fp.read()
             
             log.debug(f"✅ gTTS généré: {len(audio_data)} bytes")
@@ -177,15 +189,27 @@ class AudioGenerator:
             
             # Configuration voix
             edge_voice = voice_config.get('edge_voice', 'fr-FR-DeniseNeural')
+            personality_config = voice_config.get('personality_config', {})
             
             # Calcul vitesse (de voice_speed vers format Edge-TTS)
-            voice_speed = voice_config.get('personality_config', {}).get('voice_speed', 1.0)
+            voice_speed = personality_config.get('voice_speed', 1.0)
             rate = f"{int((voice_speed - 1) * 100):+d}%"
             
-            log.debug(f"Edge-TTS: {edge_voice}, rate: {rate}")
+            # Calcul volume (de voice_volume 0.0-1.0 vers format Edge-TTS +0%)
+            voice_volume = personality_config.get('voice_volume', 1.0)
+            # Edge-TTS volume: "+0%" is default (1.0). "-50%" is 0.5.
+            # Formula: (volume - 1) * 100
+            # Examples:
+            # 1.0 -> 0 -> "+0%"
+            # 0.5 -> -0.5 -> "-50%"
+            # 1.5 -> 0.5 -> "+50%"
+            vol_percent = int((voice_volume - 1.0) * 100)
+            volume = f"{vol_percent:+d}%"
+
+            log.debug(f"Edge-TTS: {edge_voice}, rate: {rate}, volume: {volume}")
             
             # Créer communication
-            communicate = edge_tts.Communicate(text, edge_voice, rate=rate)
+            communicate = edge_tts.Communicate(text, edge_voice, rate=rate, volume=volume)
             
             # Stream directement en mémoire (AUCUN fichier temporaire)
             audio_data = b""
@@ -341,6 +365,32 @@ class AudioGenerator:
                 audio_data = await self._generate_xtts_standard(text, sample_path)
             
             if audio_data:
+                # Apply Volume for XTTS (Generic post-processing)
+                volume_percent = voice_config.get('personality_config', {}).get('voice_volume', 1.0)
+                if volume_percent != 1.0:
+                    try:
+                        from pydub import AudioSegment
+                        import io
+                        import math
+
+                        # Load bytes (WAV)
+                        audio_fp = io.BytesIO(audio_data)
+                        audio = AudioSegment.from_wav(audio_fp)
+
+                        # Apply gain
+                        vol = max(0.01, volume_percent)
+                        gain_db = 20 * math.log10(vol)
+                        audio = audio.apply_gain(gain_db)
+
+                        # Export back to WAV bytes
+                        out_fp = io.BytesIO()
+                        audio.export(out_fp, format="wav")
+                        out_fp.seek(0)
+                        audio_data = out_fp.read()
+                        log.debug(f"🎛️ Volume XTTS appliqué: {volume_percent*100:.0f}%")
+                    except Exception as vol_err:
+                        log.warning(f"Impossible d'appliquer volume XTTS: {vol_err}")
+
                 log.debug(f"✅ XTTS généré ({len(audio_data)} bytes)")
             
             return audio_data
@@ -352,7 +402,7 @@ class AudioGenerator:
             return None
     
     async def _generate_xtts_standard(self, text: str, sample_path) -> Optional[bytes]:
-        """Génération XTTS standard avec fichier audio"""
+        """Génération XTTS standard avec fichier audio et volume adjustment"""
         try:
             # Génération standard avec fichier temporaire
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
@@ -365,7 +415,12 @@ class AudioGenerator:
                 file_path=tmp_path
             )
             
-            # Lire le fichier généré
+            # Apply Volume if needed using Pydub
+            # Note: voice_config is not passed here? It is in _generate_xtts but not passed to this helper.
+            # But wait, I can modify _generate_xtts to pass it.
+            # Or I can just return raw audio here and handle volume in _generate_xtts.
+            # Let's keep this simple and read the file.
+
             with open(tmp_path, 'rb') as f:
                 audio_data = f.read()
             

@@ -381,9 +381,12 @@
                             <label for="role-select">
                                 <i class="icon">👨‍🏫</i> Rôle
                             </label>
-                            <select id="role-select" class="select-input">
-                                <!-- Sera peuplé dynamiquement -->
-                            </select>
+                            <div class="flex gap-2">
+                                <select id="role-select" class="select-input flex-grow">
+                                    <!-- Sera peuplé dynamiquement -->
+                                </select>
+                                <button onclick="promptManager.openManager()" class="btn-secondary" title="Gérer les rôles">✏️</button>
+                            </div>
                         </div>
                         
                         <div class="setting-group">
@@ -391,6 +394,18 @@
                             <input type="range" id="llm-temperature" min="0.1" max="1.0" step="0.1" value="0.7">
                             <span id="llm-temperature-value">0.7</span>
                         </div>
+                    </div>
+
+                    <!-- Paramètres Prompts (Nouveau Tab) -->
+                    <div id="settings-prompts" class="settings-tab" style="display:none">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3>Gestion des Rôles</h3>
+                            <button onclick="promptManager.createNew()" class="btn-success">+ Nouveau</button>
+                        </div>
+                        <div id="roles-list-container" class="roles-grid">
+                            <!-- Liste des rôles -->
+                        </div>
+                        <button onclick="switchSettingsTab('llm')" class="btn-secondary mt-4">Retour</button>
                     </div>
                     
                     <!-- Paramètres Interface -->
@@ -501,6 +516,7 @@
 
     <!-- 9. Script specifique sur les outils annexe -->
     <script src="static/js/camera-panel.js"></script>
+    <script src="static/js/prompt-manager.js"></script>
 
     <!-- 10. Coordination principale (Tronc Cérébral) -->
     <script src="static/js/app-main.js"></script>

@@ -78,7 +78,18 @@ class VoiceManager {
             Object.entries(this.voices.standard).forEach(([id, voice]) => {
                 const option = document.createElement('option');
                 option.value = id;
-                option.textContent = voice.display_name || voice.name;
+
+                // Indicateurs visuels
+                let indicator = "";
+                if (voice.model === "edge-tts" || voice.model === "piper") {
+                    indicator = " 🟢 Streaming | ⚡ Vitesse native";
+                } else if (voice.model === "gtts") {
+                    indicator = " 🟠 Différé | 🐌 Vitesse simulée (Pitch)";
+                } else if (voice.model === "xtts-v2" || (voice.model && voice.model.startsWith("tts_models/"))) {
+                    indicator = " 🟠 Différé | 💎 Haute Qualité";
+                }
+
+                option.textContent = (voice.display_name || voice.name) + indicator;
                 standardGroup.appendChild(option);
             });
             
@@ -93,7 +104,14 @@ class VoiceManager {
             Object.entries(this.voices.cloned).forEach(([id, voice]) => {
                 const option = document.createElement('option');
                 option.value = id;
-                option.textContent = voice.display_name || voice.name;
+
+                // Indicateurs pour voix clonées (généralement XTTS)
+                let indicator = "";
+                if (voice.model === "xtts-v2" || (voice.model && voice.model.startsWith("tts_models/"))) {
+                     indicator = " 🟠 Différé | 💎 Haute Qualité";
+                }
+
+                option.textContent = (voice.display_name || voice.name) + indicator;
                 clonedGroup.appendChild(option);
             });
             

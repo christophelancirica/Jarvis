@@ -478,6 +478,70 @@ def create_web_app():
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    # --- API Gestion des Rôles ---
+    @app.get("/api/roles")
+    async def get_roles():
+        """Retourne la liste des rôles disponibles"""
+        try:
+            _, coordinator, _ = init_modules_lazy()
+            # On lit directement le fichier roles.json via config_coordinator si possible
+            # ou on le charge ici
+            roles_path = Path("config/roles.json")
+            if roles_path.exists():
+                with open(roles_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                return data
+            else:
+                return {"roles": {}}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @app.post("/api/roles/save")
+    async def save_roles(request: dict):
+        """Sauvegarde les rôles"""
+        try:
+            # Si le format est {id: ..., name: ...} (un seul rôle), l'ajouter
+            # Si le format est {roles: {...}, default_role: ...}, tout écraser
+
+            roles_path = Path("config/roles.json")
+
+            if 'roles' in request:
+                # Sauvegarde complète
+                with open(roles_path, "w", encoding="utf-8") as f:
+                    json.dump(request, f, indent=2, ensure_ascii=False)
+            else:
+                # Ajout/Modif unitaire
+                with open(roles_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                role_id = request.get('id')
+                if role_id:
+                    data['roles'][role_id] = request
+                    with open(roles_path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @app.delete("/api/roles/delete/{role_id}")
+    async def delete_role(role_id: str):
+        """Supprime un rôle"""
+        try:
+            roles_path = Path("config/roles.json")
+            with open(roles_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            if role_id in data['roles']:
+                del data['roles'][role_id]
+                with open(roles_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                return {"success": True}
+            else:
+                return {"success": False, "error": "Rôle non trouvé"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     return app
 
 def main():

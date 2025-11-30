@@ -65,6 +65,70 @@ async function populateVoiceSelect() {
 }
 
 /**
+ * Charge la configuration actuelle depuis l'API
+ */
+async function loadCurrentConfig() {
+    try {
+        const response = await fetch('/api/config');
+        const data = await response.json();
+        console.log('Réponse complète du serveur (/api/config) :', data);
+        if (data.voice) {
+            const serverConfig = data.voice;
+
+            // ✅ Utiliser 'Jarvis' comme fallback si display_name est manquant
+            const voiceName = serverConfig.display_name || serverConfig.personality || 'Jarvis';
+            const displayName = `Assistant virtuel - ${voiceName}`;
+
+            updatePersonality(displayName);
+            addLogEntry(`✅ ${displayName} chargé`, 'success');
+
+            // Mettre à jour le thème si différent
+            if (data.interface.theme !== currentTheme) {
+                setTheme(data.interface.theme);
+            }
+
+            // Mettre à jour l'affichage de configuration
+            updateConfigDisplay(data);
+
+            return serverConfig;
+        } else {
+            addLogEntry('⚠️ Config serveur non disponible', 'warning');
+            return null;
+        }
+    } catch (error) {
+        addLogEntry(`❌ Erreur chargement config serveur: ${error.message}`, 'error');
+        return null;
+    }
+}
+
+/**
+ * Met à jour l'affichage de la configuration dans l'interface
+ * @param {Object} configData - Données de configuration
+ */
+function updateConfigDisplay(configData) {
+    const elements = {
+        'config-llm': configData.llm.model || 'llama3.1:8b',
+        'config-tts': configData.voice.tts_model || 'edge-tts',
+        'config-personality': configData.voice.display_name || configData.voice.personality || 'Jarvis',
+        'role-select': configData.llm.role || 'assistant_general',
+        'config-audio': configData.audio.output.device_index !== null ? `Device ${configData.audio.output.device_index}` : 'Auto',
+        'config-theme': configData.interface.theme || 'light'
+    };
+
+    Object.entries(elements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
+    });
+
+    // Mettre à jour la personnalité dans le header si disponible
+    if (configData.display_name) {
+        updatePersonality(configData.display_name);
+    }
+}
+
+/**
  * Peuple la liste des modèles LLM
  */
 function populateModelSelect() {

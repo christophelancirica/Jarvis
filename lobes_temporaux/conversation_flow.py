@@ -307,7 +307,16 @@ class ConversationFlow:
 
             # 🔇 Vérification mode muet (Optimisation P1)
             config_manager = ConfigManager()
-            is_muted = config_manager.get_config().get('audio', {}).get('output', {}).get('muted', False)
+            audio_config = config_manager.get_config().get('audio', {}).get('output', {})
+            is_muted = audio_config.get('muted', False)
+
+            # 🐛 FIX: Hot-Swap Audio - Récupérer et appliquer vitesse/volume MAINTENANT
+            current_speed = audio_config.get('speed', 1.0)
+            current_volume = audio_config.get('volume', 90)
+
+            # Appliquer les réglages à l'instance TTS AVANT de commencer
+            if self.tts:
+                self.tts.update_voice_settings(speed=current_speed, volume=current_volume)
 
             if is_muted:
                 log.debug("🔇 Mode Muet activé : Pipeline TTS désactivé (Optimisation)", "🔊")

@@ -49,6 +49,12 @@ async function populateVoiceSelect() {
         
         if (data.voice_id && voiceSelect.querySelector(`option[value="${data.voice_id}"]`)) {
             voiceSelect.value = data.voice_id;
+
+            // 🐛 FIX: Mise à jour immédiate du DOM pour éviter "Samantha"
+            const voiceName = voiceSelect.options[voiceSelect.selectedIndex].text;
+            const displayName = `Assistant virtuel - ${voiceName}`;
+            updatePersonality(displayName);
+
             addLogEntry(`✅ Voix serveur restaurée: ${data.voice_id}`, 'success');
             return;
         }
@@ -76,7 +82,14 @@ async function loadCurrentConfig() {
             const serverConfig = data.voice;
 
             // ✅ Utiliser 'Jarvis' comme fallback si display_name est manquant
-            const voiceName = serverConfig.display_name || serverConfig.personality || 'Jarvis';
+            // 🐛 FIX: Supprimer les fallbacks trompeurs hardcodés comme "Samantha"
+            let voiceName = serverConfig.display_name || serverConfig.personality;
+
+            if (!voiceName) {
+                // Essayer de récupérer depuis l'ID si possible
+                voiceName = serverConfig.voice_id || 'Jarvis';
+            }
+
             const displayName = `Assistant virtuel - ${voiceName}`;
 
             updatePersonality(displayName);

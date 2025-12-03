@@ -35,14 +35,31 @@ class PromptManager {
      * Ouvre le gestionnaire (Tab Prompts)
      */
     openManager() {
-        this.loadRoles();
-        // Basculer l'onglet
-        document.querySelectorAll('.settings-tab').forEach(tab => tab.classList.remove('active'));
-        document.getElementById('settings-prompts').classList.add('active');
-        document.getElementById('settings-prompts').style.display = 'block';
+        // 🐛 FIX: Ouvrir la modale settings si fermée
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal && !settingsModal.classList.contains('show')) {
+            if (window.openSettings) window.openSettings();
+        }
 
-        // Cacher les autres (hack rapide pour l'intégration existante)
-        document.getElementById('settings-llm').style.display = 'none';
+        this.loadRoles();
+
+        // Basculer l'onglet via la fonction standard si possible, ou manuellement
+        if (window.switchSettingsTab) {
+            // On masque d'abord les autres tabs via la logique standard
+            window.switchSettingsTab('prompts');
+        }
+
+        // Forcer l'affichage (backup)
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.display = 'none'; // S'assurer que les autres sont cachés
+        });
+
+        const promptsTab = document.getElementById('settings-prompts');
+        if (promptsTab) {
+            promptsTab.classList.add('active');
+            promptsTab.style.display = 'block';
+        }
     }
 
     /**
